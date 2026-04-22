@@ -1,21 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 type ChangeHandler = (payload: unknown) => void;
 
-/**
- * Supabase Realtime aboneliği başlatır.
- * appointments, reviews — tüm INSERT/UPDATE/DELETE olaylarını dinler.
- * Döndürdüğü fonksiyon çağrıldığında abonelik iptal edilir.
- */
 export function subscribeToChanges(handlers: {
   onAppointment?: ChangeHandler;
   onReview?: ChangeHandler;
 }): () => void {
+  if (!supabase) return () => {};
+
   const channel = supabase
     .channel('db-changes')
     .on(
