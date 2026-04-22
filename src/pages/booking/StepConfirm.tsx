@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useStore } from '../../store';
 import { useUserAuth } from '../../store/userAuth';
 import { useNavigate } from 'react-router-dom';
+import { appointmentsApi } from '../../lib/api';
 import {
   ArrowLeft, Scissors, User, CalendarDays, Clock,
   Phone, Mail, ChevronRight, Star,
@@ -63,8 +64,26 @@ export default function StepConfirm() {
   async function handleConfirm() {
     if (!service || !employee || !booking.date || !booking.startTime || !currentUser) return;
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
 
+    try {
+      await appointmentsApi.create({
+        customerName:  currentUser.name,
+        customerPhone: currentUser.phone,
+        customerId:    currentUser.id,
+        serviceId:     booking.serviceId!,
+        employeeId:    booking.employeeId!,
+        date:          booking.date,
+        startTime:     booking.startTime,
+        endTime,
+      });
+    } catch (err: unknown) {
+      setLoading(false);
+      const msg = err instanceof Error ? err.message : 'Randevu oluşturulamadı';
+      alert(msg);
+      return;
+    }
+
+    // Yerel store'a da ekle (anında UI güncellenir)
     addAppointment({
       customerName:  currentUser.name,
       customerPhone: currentUser.phone,

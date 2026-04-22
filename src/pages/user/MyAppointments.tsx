@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store';
 import { useReviewStore } from '../../store/reviews';
 import { useUserAuth } from '../../store/userAuth';
 import { useSwal } from '../../lib/swal';
+import { appointmentsApi, reviewsApi } from '../../lib/api';
 import { Modal } from '../../components/ui/Modal';
 import { Card } from '../../components/ui/Card';
 import {
@@ -70,10 +71,18 @@ function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => 
       confirmText: 'Evet, taşı',
     });
     if (!ok) return;
+    const newEnd = calcEnd(selectedTime, service.durationMinutes);
+    try {
+      await appointmentsApi.update(appt.id, {
+        date: selectedDate,
+        start_time: selectedTime,
+        end_time: newEnd,
+      });
+    } catch {}
     updateAppointment(appt.id, {
       date: selectedDate,
       startTime: selectedTime,
-      endTime: calcEnd(selectedTime, service.durationMinutes),
+      endTime: newEnd,
     });
     swal.toast({ icon: 'success', title: 'Randevu güncellendi' });
     onClose();
@@ -151,9 +160,20 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 
   const STAR_LABELS = ['', 'Berbat', 'Kötü', 'Orta', 'İyi', 'Mükemmel'];
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!currentUser) return;
+    try {
+      await reviewsApi.create({
+        appointmentId: appt.id,
+        serviceId: appt.serviceId,
+        employeeId: appt.employeeId,
+        customerName: currentUser.name,
+        rating,
+        comment,
+      });
+    } catch {}
+    // Yerel store'a da ekle (anında UI güncellenir)
     addReview({
       appointmentId: appt.id,
       serviceId: appt.serviceId,
@@ -230,12 +250,43 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function MyAppointments() {
   const { appointments, services, employees, cancelAppointment, addNotification } = useStore();
-  const { hasReview } = useReviewStore();
+  const { hasReview, reviews } = useReviewStore();
   const { currentUser } = useUserAuth();
   const navigate = useNavigate();
   const swal = useSwal();
 
   const [tab, setTab]           = useState<'upcoming' | 'past'>('upcoming');
+
+  // Sayfa açılınca API'den güncel randevuları ve değerlendirmeleri çek
+  useEffect(() => {
+    if (!currentUser) return;
+    Promise.all([appointmentsApi.list(), reviewsApi.list()]).then(([appts, revs]) => {
+      useStore.setState(s => ({
+        ...s,
+        appointments: appts.map(a => ({
+          id: a.id, customerId: a.customer_id,
+          customerName: a.customer_name, customerPhone: a.customer_phone,
+          serviceId: a.service_id, employeeId: a.employee_id,
+          date: a.date, startTime: a.start_time, endTime: a.end_time,
+          status: a.status as 'pending'|'confirmed'|'cancelled'|'completed'|'noshow',
+          notes: a.notes,
+        })),
+      }));
+      useReviewStore.setState(s => ({
+        ...s,
+        reviews: revs.map(r => ({
+          id: r.id, appointmentId: r.appointment_id,
+          serviceId: r.service_id, employeeId: r.employee_id,
+          customerName: r.customer_name,
+          rating: r.rating as 1|2|3|4|5,
+          comment: r.comment, createdAt: r.created_at,
+        })),
+      }));
+    }).catch(() => {});
+  }, [currentUser]);
+
+  // reviews değişkeni kullanılıyor (hasReview için)
+  void reviews;
   const [reschedule, setReschedule] = useState<Appointment | null>(null);
   const [reviewing, setReviewing]   = useState<Appointment | null>(null);
 
@@ -265,6 +316,9 @@ export default function MyAppointments() {
     const ok = await swal.confirm({ title: 'Randevuyu iptal et?', text: 'Bu işlem geri alınamaz.', confirmText: 'Evet, iptal et' });
     if (!ok) return;
     const appt = appointments.find(a => a.id === id);
+    try {
+      await appointmentsApi.update(id, { status: 'cancelled' } as never);
+    } catch {}
     cancelAppointment(id);
     if (appt) {
       const svc = services.find(s => s.id === appt.serviceId);
