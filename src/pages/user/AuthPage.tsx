@@ -1,9 +1,17 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, Phone, Scissors, Sun, Moon } from 'lucide-react';
 import { useUserAuth } from '../../store/userAuth';
 import { useTheme } from '../../store/theme';
 import { cn } from '../../lib/utils';
+
+const DEMO_USERS = [
+  { name: 'Ali Yılmaz',   email: 'ali@example.com',    password: 'demo1234' },
+  { name: 'Fatma Kaya',   email: 'fatma@example.com',  password: 'demo1234' },
+  { name: 'Emre Demir',   email: 'emre@example.com',   password: 'demo1234' },
+  { name: 'Zeynep Çelik', email: 'zeynep@example.com', password: 'demo1234' },
+  { name: 'Murat Şahin',  email: 'murat@example.com',  password: 'demo1234' },
+];
 
 const inputCls = (icon = true) =>
   cn(
@@ -41,7 +49,6 @@ function Field({ label, icon, rightEl, className, ...props }: FieldProps) {
   );
 }
 
-/* ── Login form ─────────────────────────────────────────────────────── */
 function LoginForm() {
   const login = useUserAuth(s => s.login);
   const navigate = useNavigate();
@@ -54,6 +61,12 @@ function LoginForm() {
 
   const nextPath = searchParams.get('next') ?? '/my-appointments';
 
+  function fillDemo(u: typeof DEMO_USERS[0]) {
+    setEmailOrPhone(u.email);
+    setPassword(u.password);
+    setError('');
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -65,51 +78,71 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Field
-        label="E-posta veya Telefon"
-        icon={<Mail size={14} />}
-        type="text"
-        required
-        autoComplete="email"
-        placeholder="ornek@mail.com veya 05xx…"
-        value={emailOrPhone}
-        onChange={e => setEmailOrPhone(e.target.value)}
-      />
-      <Field
-        label="Şifre"
-        icon={<Lock size={14} />}
-        type={showPass ? 'text' : 'password'}
-        required
-        autoComplete="current-password"
-        placeholder="••••••••"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        rightEl={
-          <button type="button" tabIndex={-1} onClick={() => setShowPass(v => !v)}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-white/50 transition-colors">
-            {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
-          </button>
-        }
-      />
+    <div className="space-y-4">
+      <div className="rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 p-3.5">
+        <p className="text-[0.75rem] font-semibold text-[#6366F1] dark:text-indigo-400 mb-2">Demo Hesaplar</p>
+        <div className="flex flex-col gap-1.5">
+          {DEMO_USERS.map(u => (
+            <button
+              key={u.email}
+              type="button"
+              onClick={() => fillDemo(u)}
+              className="flex items-center justify-between rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-white/5 px-3 py-2 text-left transition hover:border-indigo-400 dark:hover:border-indigo-400/60"
+            >
+              <div>
+                <p className="text-xs font-semibold text-gray-800 dark:text-white">{u.name}</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">{u.email}</p>
+              </div>
+              <span className="text-[11px] font-medium text-[#6366F1] dark:text-indigo-400">Doldur →</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {error && (
-        <p className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-500">
-          {error}
-        </p>
-      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field
+          label="E-posta veya Telefon"
+          icon={<Mail size={14} />}
+          type="text"
+          required
+          autoComplete="email"
+          placeholder="ornek@mail.com veya 05xx..."
+          value={emailOrPhone}
+          onChange={e => setEmailOrPhone(e.target.value)}
+        />
+        <Field
+          label="Şifre"
+          icon={<Lock size={14} />}
+          type={showPass ? 'text' : 'password'}
+          required
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          rightEl={
+            <button type="button" tabIndex={-1} onClick={() => setShowPass(v => !v)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-white/50 transition-colors">
+              {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+            </button>
+          }
+        />
 
-      <button type="submit" disabled={loading}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#4F46E5] active:scale-[0.98] transition-all disabled:opacity-60 disabled:pointer-events-none">
-        {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
-        Giriş Yap
-      </button>
+        {error && (
+          <p className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-sm text-red-500">
+            {error}
+          </p>
+        )}
 
-    </form>
+        <button type="submit" disabled={loading}
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#6366F1] px-5 text-sm font-semibold text-white shadow-sm hover:bg-[#4F46E5] active:scale-[0.98] transition-all disabled:opacity-60 disabled:pointer-events-none">
+          {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />}
+          Giriş Yap
+        </button>
+      </form>
+    </div>
   );
 }
 
-/* ── Register form ──────────────────────────────────────────────────── */
 function RegisterForm() {
   const register = useUserAuth(s => s.register);
   const navigate = useNavigate();
@@ -182,7 +215,6 @@ function AuthThemeToggle() {
   );
 }
 
-/* ── Page ───────────────────────────────────────────────────────────── */
 export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
   const isLogin = mode === 'login';
   const [searchParams] = useSearchParams();
@@ -191,24 +223,17 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
 
   return (
     <div className="min-h-screen flex overflow-hidden bg-[#F0F2FF] dark:bg-[#0f1117]">
-
-      {/* ── Sol: marketing (masaüstü) ─────────────────────────────── */}
       <div className="relative z-10 hidden lg:flex lg:w-1/2 flex-col justify-between p-14">
-        {/* arka plan efektleri */}
         <div aria-hidden className="pointer-events-none absolute inset-0"
           style={{ backgroundImage: 'linear-gradient(rgba(99,102,241,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.07) 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
         <div aria-hidden className="pointer-events-none absolute left-0 top-0 h-[70%] w-[60%] rounded-full"
           style={{ background: 'radial-gradient(ellipse,rgba(99,102,241,0.12),transparent 70%)', filter: 'blur(40px)' }} />
-
-        {/* logo */}
         <div className="relative flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-[#6366F1] flex items-center justify-center shadow-lg shadow-[#6366F1]/30">
             <Scissors size={17} className="text-white" />
           </div>
           <span className="text-sm font-semibold text-gray-800 dark:text-white/90">Randevu CRM</span>
         </div>
-
-        {/* içerik */}
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#6366F1] mb-3">
             {isLogin ? 'Tekrar hoş geldiniz' : 'Hesap oluşturun'}
@@ -226,7 +251,6 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               ? 'Hesabınıza giriş yaparak tüm randevularınızı takip edin, iptal edin veya yeniden planlayın.'
               : 'Ücretsiz hesap oluşturun; randevularınızı takip edin, favori hizmetlerinizi kaydedin.'}
           </p>
-
           <div className="mt-10 flex flex-col gap-3.5">
             {[
               { e: '📅', t: 'Randevularınızı tek ekrandan takip edin' },
@@ -243,20 +267,14 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             ))}
           </div>
         </div>
-
-        <p className="relative text-xs text-gray-400 dark:text-white/20">
-          © 2026 Randevu CRM. Tüm hakları saklıdır.
-        </p>
+        <p className="relative text-xs text-gray-400 dark:text-white/20">© 2026 Randevu CRM.</p>
       </div>
 
-      {/* dikey çizgi */}
       <div aria-hidden className="hidden lg:block w-px self-stretch"
         style={{ background: 'linear-gradient(to bottom,transparent,rgba(99,102,241,0.25),transparent)' }} />
 
-      {/* ── Sağ: form ─────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center p-6 relative">
         <AuthThemeToggle />
-        {/* mobil logo */}
         <div className="mb-8 flex flex-col items-center lg:hidden">
           <div className="w-10 h-10 rounded-2xl bg-[#6366F1] flex items-center justify-center shadow-lg shadow-[#6366F1]/30 mb-3">
             <Scissors size={18} className="text-white" />
@@ -285,21 +303,29 @@ export default function AuthPage({ mode }: { mode: 'login' | 'register' }) {
             <div className="h-px flex-1 bg-gray-200 dark:bg-white/[0.08]" />
           </div>
 
-          <p className="mt-5 text-center text-sm text-gray-500 dark:text-white/40">
-            {isLogin ? (
-              <>Hesabınız yok mu?{' '}
+          {isLogin ? (
+            <div className="mt-5 flex flex-col gap-3">
+              <p className="text-center text-sm text-gray-500 dark:text-white/40">
+                Hesabınız yok mu?{' '}
                 <Link to={`/register${nextQs}`} className="font-semibold text-[#6366F1] hover:text-[#4F46E5] dark:text-indigo-400 transition-colors">
                   Kayıt olun
                 </Link>
-              </>
-            ) : (
-              <>Zaten hesabınız var mı?{' '}
-                <Link to={`/login${nextQs}`} className="font-semibold text-[#6366F1] hover:text-[#4F46E5] dark:text-indigo-400 transition-colors">
-                  Giriş yapın
-                </Link>
-              </>
-            )}
-          </p>
+              </p>
+              <Link
+                to="/admin/login"
+                className="flex w-full items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                Yönetim Girişi
+              </Link>
+            </div>
+          ) : (
+            <p className="mt-5 text-center text-sm text-gray-500 dark:text-white/40">
+              Zaten hesabınız var mı?{' '}
+              <Link to={`/login${nextQs}`} className="font-semibold text-[#6366F1] hover:text-[#4F46E5] dark:text-indigo-400 transition-colors">
+                Giriş yapın
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Scissors } from 'lucide-react';
 import { useAuth } from '../../store/auth';
 
@@ -35,6 +35,22 @@ export default function Login() {
             </div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">Yönetim Paneli</h1>
             <p className="text-sm text-gray-400 mt-1">Admin şifrenizi girin</p>
+          </div>
+
+          {/* Demo hesap */}
+          <div className="mb-5 rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50 dark:bg-indigo-500/10 p-3.5">
+            <p className="text-[0.75rem] font-semibold text-indigo-600 dark:text-indigo-400 mb-2">Demo Hesap</p>
+            <button
+              type="button"
+              onClick={() => setPassword('admin123')}
+              className="flex w-full items-center justify-between rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-white/5 px-3 py-2 text-left transition hover:border-indigo-400 dark:hover:border-indigo-400/60"
+            >
+              <div>
+                <p className="text-xs font-semibold text-gray-800 dark:text-white">Yönetici</p>
+                <p className="text-[11px] text-gray-400 dark:text-gray-500">Şifre: admin123</p>
+              </div>
+              <span className="text-[11px] font-medium text-indigo-500 dark:text-indigo-400">Doldur →</span>
+            </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,6 +95,19 @@ export default function Login() {
               Giriş Yap
             </button>
           </form>
+
+          <div className="mt-5 flex items-center gap-3">
+            <div className="h-px flex-1 bg-gray-200 dark:bg-white/[0.08]" />
+            <span className="text-[0.6875rem] font-semibold tracking-[0.08em] text-gray-400 dark:text-white/25">VEYA</span>
+            <div className="h-px flex-1 bg-gray-200 dark:bg-white/[0.08]" />
+          </div>
+
+          <Link
+            to="/login"
+            className="mt-4 flex w-full items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+          >
+            Müşteri Girişi
+          </Link>
         </div>
       </div>
     </div>
