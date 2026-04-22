@@ -1,6 +1,8 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi, setToken, clearToken } from '../lib/api';
+
+const LOCAL_ADMIN_PASSWORD = 'admin123';
 
 interface AuthStore {
   isAuthenticated: boolean;
@@ -20,6 +22,11 @@ export const useAuth = create<AuthStore>()(
           set({ isAuthenticated: true });
           return true;
         } catch {
+          // Backend yoksa yerel şifreyle kontrol et
+          if (password === LOCAL_ADMIN_PASSWORD) {
+            set({ isAuthenticated: true });
+            return true;
+          }
           return false;
         }
       },
