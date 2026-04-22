@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import { supabase } from '../_lib/supabase.js';
-import { signToken, cors } from '../_lib/auth.js';
+import { supabase } from '../_lib/supabase';
+import { signToken, cors } from '../_lib/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(res);
@@ -12,12 +12,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     name: string; email: string; phone: string; password: string;
   };
   if (!name || !email || !phone || !password)
-    return res.status(400).json({ error: 'Tüm alanlar zorunlu' });
+    return res.status(400).json({ error: 'Tum alanlar zorunlu' });
 
   const { data: existing } = await supabase
     .from('users').select('id').or(`email.eq.${email},phone.eq.${phone}`).single();
   if (existing)
-    return res.status(409).json({ error: 'Bu e-posta veya telefon zaten kayıtlı' });
+    return res.status(409).json({ error: 'Bu e-posta veya telefon zaten kayitli' });
 
   const password_hash = await bcrypt.hash(password, 10);
   const { data: user, error } = await supabase

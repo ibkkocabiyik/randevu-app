@@ -1,5 +1,5 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { signToken, cors } from '../_lib/auth.js';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { signToken, cors } from '../_lib/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(res);
@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { password } = req.body as { password: string };
   const adminPass = process.env.ADMIN_PASSWORD ?? 'admin123';
   if (password !== adminPass)
-    return res.status(401).json({ error: 'Şifre hatalı' });
+    return res.status(401).json({ error: 'Sifre hatali' });
 
   const token = signToken({ userId: 'admin', role: 'admin' });
   return res.json({ token });

@@ -1,6 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from '../_lib/supabase.js';
-import { cors } from '../_lib/auth.js';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { supabase } from '../_lib/supabase';
+import { cors } from '../_lib/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(res);
@@ -20,7 +20,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data: existing } = await supabase
       .from('reviews').select('id').eq('appointment_id', appointmentId).single();
     if (existing)
-      return res.status(409).json({ error: 'Bu randevu için zaten değerlendirme yapıldı' });
+      return res.status(409).json({ error: 'Bu randevu icin zaten degerlendirme yapildi' });
 
     const { data, error } = await supabase
       .from('reviews')

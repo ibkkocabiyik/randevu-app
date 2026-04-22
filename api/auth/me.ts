@@ -1,6 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { supabase } from '../_lib/supabase.js';
-import { requireAuth, cors } from '../_lib/auth.js';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { supabase } from '../_lib/supabase';
+import { requireAuth, cors } from '../_lib/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(res);
@@ -12,7 +12,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('users').select('*').eq('id', user.userId).single();
-    if (error || !data) return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    if (error || !data) return res.status(404).json({ error: 'Kullanici bulunamadi' });
     return res.json(data);
   }
 

@@ -1,7 +1,7 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
 import bcrypt from 'bcryptjs';
-import { supabase } from '../_lib/supabase.js';
-import { signToken, cors } from '../_lib/auth.js';
+import { supabase } from '../_lib/supabase';
+import { signToken, cors } from '../_lib/auth';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   cors(res);
@@ -9,18 +9,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end();
 
   const { emailOrPhone, password } = req.body as { emailOrPhone: string; password: string };
-  if (!emailOrPhone || !password)
-    return res.status(400).json({ error: 'E-posta/telefon ve şifre zorunlu' });
+    return res.status(400).json({ error: 'E-posta/telefon ve sifre zorunlu' });
+    return res.status(400).json({ error: 'E-posta/telefon ve sifre zorunlu' });
 
   const { data: user } = await supabase
     .from('users').select('*')
     .or(`email.eq.${emailOrPhone},phone.eq.${emailOrPhone}`)
     .single();
 
-  if (!user) return res.status(401).json({ error: 'Kullanıcı bulunamadı' });
+  if (!user) return res.status(401).json({ error: 'Kullanici bulunamadi' });
 
   const ok = await bcrypt.compare(password, user.password_hash);
-  if (!ok) return res.status(401).json({ error: 'Şifre hatalı' });
+  if (!ok) return res.status(401).json({ error: 'Sifre hatali' });
 
   const token = signToken({ userId: user.id, role: 'user' });
   return res.json({ token, user });
