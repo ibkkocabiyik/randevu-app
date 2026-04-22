@@ -4,9 +4,7 @@ import { PageTransition } from './PageTransition';
 import { useAuth } from '../store/auth';
 import { useTheme } from '../store/theme';
 import { useRealtime } from '../hooks/useRealtime';
-import { appointmentsApi, reviewsApi, servicesApi, employeesApi } from '../lib/api';
-import { useStore } from '../store';
-import { useReviewStore } from '../store/reviews';
+import { useData } from '../lib/data';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -159,56 +157,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Supabase Realtime — anlık değişiklikleri dinle
   useRealtime();
 
-  // Admin paneli açılınca API'den güncel veriyi çek
-  useEffect(() => {
-    async function fetchAll() {
-      try {
-        const [appts, reviews, services, employees] = await Promise.all([
-          appointmentsApi.list(),
-          reviewsApi.list(),
-          servicesApi.list(),
-          employeesApi.list(),
-        ]);
-
-        useStore.setState(s => ({
-          ...s,
-          appointments: appts.map(a => ({
-            id: a.id, customerId: a.customer_id,
-            customerName: a.customer_name, customerPhone: a.customer_phone,
-            serviceId: a.service_id, employeeId: a.employee_id,
-            date: a.date, startTime: a.start_time, endTime: a.end_time,
-            status: a.status as 'pending'|'confirmed'|'cancelled'|'completed'|'noshow',
-            notes: a.notes,
-          })),
-          services: services.map(s => ({
-            id: s.id, name: s.name,
-            durationMinutes: s.duration_minutes,
-            price: Number(s.price),
-            category: s.category,
-          })),
-          employees: employees.map(e => ({
-            id: e.id, name: e.name, avatar: e.avatar,
-            workingHours: { start: e.working_hours_start, end: e.working_hours_end },
-            serviceIds: e.serviceIds,
-          })),
-        }));
-
-        useReviewStore.setState(s => ({
-          ...s,
-          reviews: reviews.map(r => ({
-            id: r.id, appointmentId: r.appointment_id,
-            serviceId: r.service_id, employeeId: r.employee_id,
-            customerName: r.customer_name,
-            rating: r.rating as 1|2|3|4|5,
-            comment: r.comment, createdAt: r.created_at,
-          })),
-        }));
-      } catch (e) {
-        console.error('API fetch failed:', e);
-      }
-    }
-    fetchAll();
-  }, []);
+  // Admin paneli açılınca veriyi yenile (main.tsx'de fetchAll çağrılmışsa bu hızlı döner)
+  useEffect(() => { useData.getState().fetchAll(); }, []);
 
   // Sayfa değişince drawer'ı kapat
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);

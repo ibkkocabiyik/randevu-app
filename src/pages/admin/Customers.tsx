@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore } from '../../store';
+import { useData, toCustomerNote } from '../../lib/data';
 import { customersApi } from '../../lib/api';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
@@ -26,10 +26,7 @@ interface CustomerSummary {
 }
 
 export default function Customers() {
-  const {
-    appointments, services,
-    customerNotes, addCustomerNote, updateCustomerNote, deleteCustomerNote,
-  } = useStore();
+  const { appointments, services, customerNotes, setCustomerNotes } = useData();
   const swal = useSwal();
   const [search, setSearch]     = useState('');
   const [selected, setSelected] = useState<CustomerSummary | null>(null);
@@ -70,25 +67,26 @@ export default function Customers() {
 
   async function handleAddNote() {
     if (!selected || !noteText.trim()) return;
-    try { await customersApi.addNote(selected.phone, noteText.trim()); } catch {}
-    addCustomerNote(selected.phone, noteText.trim());
+    try {
+      const note = await customersApi.addNote(selected.phone, noteText.trim());
+      setCustomerNotes([...customerNotes, toCustomerNote(note)]);
+    } catch {}
     setNoteText('');
   }
 
   async function handleDeleteNote(id: string) {
     const ok = await swal.confirm({ title: 'Notu sil?', confirmText: 'Evet, sil' });
     if (!ok) return;
+    setCustomerNotes(customerNotes.filter(n => n.id !== id));
     try { await customersApi.deleteNote(id); } catch {}
-    deleteCustomerNote(id);
   }
 
   function handleSaveEditNote() {
     if (!editNote || !editNote.text.trim()) return;
-    updateCustomerNote(editNote.id, editNote.text.trim());
+    setCustomerNotes(customerNotes.map(n => n.id === editNote.id ? { ...n, text: editNote.text.trim() } : n));
     setEditNote(null);
   }
 
-  // Müşteri için toplam randevu sayısını üst köşede göster
   const noteCount = (phone: string) => customerNotes.filter(n => n.customerPhone === phone).length;
 
   return (
@@ -291,8 +289,8 @@ export default function Customers() {
               </h3>
               <div className="space-y-2 max-h-56 overflow-y-auto">
                 {customerAppts.map(a => {
-                  const service  = useStore.getState().services.find(s => s.id === a.serviceId);
-                  const employee = useStore.getState().employees.find(e => e.id === a.employeeId);
+                  const service  = services.find(s => s.id === a.serviceId);
+                  const employee = useData.getState().employees.find(e => e.id === a.employeeId);
                   const meta     = STATUS_META[a.status] ?? { label: a.status, cls: 'bg-gray-100 text-gray-500' };
                   return (
                     <div key={a.id} className="flex items-center gap-3 rounded-xl border border-gray-100 dark:border-gray-700 px-4 py-3 hover:bg-gray-50/60 dark:hover:bg-white/[0.02] transition-colors">

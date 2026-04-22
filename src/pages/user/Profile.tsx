@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '../../store/userAuth';
 import type { NotificationPreferences } from '../../store/userAuth';
-import { useStore } from '../../store';
+import { useData } from '../../lib/data';
 import { useSwal } from '../../lib/swal';
 import { Card } from '../../components/ui/Card';
 import {
@@ -16,7 +16,7 @@ const inputCls = 'w-full rounded-xl border border-gray-200 dark:border-gray-700 
 
 export default function Profile() {
   const { currentUser, updateProfile, logout } = useUserAuth();
-  const { services, appointments } = useStore();
+  const { services, appointments } = useData();
   const navigate = useNavigate();
   const swal = useSwal();
 

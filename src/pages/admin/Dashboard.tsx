@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore } from '../../store';
+import { useData } from '../../lib/data';
 import { Card } from '../../components/ui/Card';
 import {
   CalendarCheck,
@@ -420,8 +420,9 @@ function QuickAction({ label, icon: Icon, iconColor, onClick }: {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { appointments, services, employees } = useStore();
-  const { reviews } = useReviewStore();
+  const { appointments, services, employees, reviews: dataReviews } = useData();
+  const legacyReviews = useReviewStore(s => s.reviews);
+  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const { users } = useUserAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<'tickets' | 'summary'>('tickets');

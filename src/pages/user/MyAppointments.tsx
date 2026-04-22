@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store';
+import { useData, toAppointment, toReview } from '../../lib/data';
 import { useReviewStore } from '../../store/reviews';
 import { useUserAuth } from '../../store/userAuth';
 import { useSwal } from '../../lib/swal';
@@ -36,7 +37,7 @@ function StatusPill({ status }: { status: string }) {
 
 /* ── Reschedule modal ─────────────────────────────────────────────── */
 function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
-  const { employees, appointments, services, updateAppointment } = useStore();
+  const { employees, appointments, services, upsertAppointment } = useData();
   const swal = useSwal();
   const employee = employees.find(e => e.id === appt.employeeId);
   const service  = services.find(s => s.id === appt.serviceId);
@@ -79,11 +80,7 @@ function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => 
         end_time: newEnd,
       });
     } catch {}
-    updateAppointment(appt.id, {
-      date: selectedDate,
-      startTime: selectedTime,
-      endTime: newEnd,
-    });
+    upsertAppointment({ ...appt, date: selectedDate, startTime: selectedTime, endTime: newEnd });
     swal.toast({ icon: 'success', title: 'Randevu güncellendi' });
     onClose();
   }
@@ -147,7 +144,7 @@ function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => 
 
 /* ── Review modal ─────────────────────────────────────────────────── */
 function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
-  const { services, employees } = useStore();
+  const { services, employees } = useData();
   const { addReview } = useReviewStore();
   const { currentUser } = useUserAuth();
   const swal = useSwal();
@@ -164,24 +161,13 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
     e.preventDefault();
     if (!currentUser) return;
     try {
-      await reviewsApi.create({
-        appointmentId: appt.id,
-        serviceId: appt.serviceId,
-        employeeId: appt.employeeId,
-        customerName: currentUser.name,
-        rating,
-        comment,
+      const api = await reviewsApi.create({
+        appointmentId: appt.id, serviceId: appt.serviceId,
+        employeeId: appt.employeeId, customerName: currentUser.name, rating, comment,
       });
-    } catch {}
-    // Yerel store'a da ekle (anında UI güncellenir)
-    addReview({
-      appointmentId: appt.id,
-      serviceId: appt.serviceId,
-      employeeId: appt.employeeId,
-      customerName: currentUser.name,
-      rating,
-      comment,
-    });
+      useData.getState().upsertReview(toReview(api));
+      addReview({ appointmentId: appt.id, serviceId: appt.serviceId, employeeId: appt.employeeId, customerName: currentUser.name, rating, comment });
+    } catch { addReview({ appointmentId: appt.id, serviceId: appt.serviceId, employeeId: appt.employeeId, customerName: currentUser.name, rating, comment }); }
     swal.toast({ icon: 'success', title: 'Değerlendirmeniz için teşekkürler!' });
     onClose();
   }
@@ -249,44 +235,16 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function MyAppointments() {
-  const { appointments, services, employees, cancelAppointment, addNotification } = useStore();
-  const { hasReview, reviews } = useReviewStore();
+  const { appointments, services, employees, upsertAppointment, upsertReview } = useData();
+  const { addNotification } = useStore();
+  const { hasReview, addReview: _addReview } = useReviewStore();
   const { currentUser } = useUserAuth();
   const navigate = useNavigate();
   const swal = useSwal();
 
-  const [tab, setTab]           = useState<'upcoming' | 'past'>('upcoming');
+  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
-  // Sayfa açılınca API'den güncel randevuları ve değerlendirmeleri çek
-  useEffect(() => {
-    if (!currentUser) return;
-    Promise.all([appointmentsApi.list(), reviewsApi.list()]).then(([appts, revs]) => {
-      useStore.setState(s => ({
-        ...s,
-        appointments: appts.map(a => ({
-          id: a.id, customerId: a.customer_id,
-          customerName: a.customer_name, customerPhone: a.customer_phone,
-          serviceId: a.service_id, employeeId: a.employee_id,
-          date: a.date, startTime: a.start_time, endTime: a.end_time,
-          status: a.status as 'pending'|'confirmed'|'cancelled'|'completed'|'noshow',
-          notes: a.notes,
-        })),
-      }));
-      useReviewStore.setState(s => ({
-        ...s,
-        reviews: revs.map(r => ({
-          id: r.id, appointmentId: r.appointment_id,
-          serviceId: r.service_id, employeeId: r.employee_id,
-          customerName: r.customer_name,
-          rating: r.rating as 1|2|3|4|5,
-          comment: r.comment, createdAt: r.created_at,
-        })),
-      }));
-    }).catch(() => {});
-  }, [currentUser]);
-
-  // reviews değişkeni kullanılıyor (hasReview için)
-  void reviews;
+  void upsertReview; void _addReview;
   const [reschedule, setReschedule] = useState<Appointment | null>(null);
   const [reviewing, setReviewing]   = useState<Appointment | null>(null);
 
@@ -316,10 +274,10 @@ export default function MyAppointments() {
     const ok = await swal.confirm({ title: 'Randevuyu iptal et?', text: 'Bu işlem geri alınamaz.', confirmText: 'Evet, iptal et' });
     if (!ok) return;
     const appt = appointments.find(a => a.id === id);
-    try {
-      await appointmentsApi.update(id, { status: 'cancelled' } as never);
-    } catch {}
-    cancelAppointment(id);
+    const appt2 = appointments.find(a => a.id === id);
+    if (appt2) upsertAppointment({ ...appt2, status: 'cancelled' });
+    try { await appointmentsApi.update(id, { status: 'cancelled' } as never); }
+    catch { if (appt2) upsertAppointment(appt2); }
     if (appt) {
       const svc = services.find(s => s.id === appt.serviceId);
       addNotification({

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useStore } from '../../store';
+import { useData } from '../../lib/data';
 import { useReviewStore } from '../../store/reviews';
 import { Star, MessageSquare, TrendingUp, Award, Filter } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -36,8 +36,9 @@ function RatingBar({ rating, count, total }: { rating: number; count: number; to
 }
 
 export default function Reviews() {
-  const { services, employees } = useStore();
-  const { reviews } = useReviewStore();
+  const { services, employees, reviews: dataReviews } = useData();
+  const legacyReviews = useReviewStore(s => s.reviews);
+  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const [filterService, setFilterService] = useState('');
   const [filterEmployee, setFilterEmployee] = useState('');
   const [filterRating, setFilterRating] = useState(0);
