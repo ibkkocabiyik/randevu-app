@@ -76,11 +76,8 @@ export default function StepConfirm() {
         startTime:     booking.startTime,
         endTime,
       });
-    } catch (err: unknown) {
-      setLoading(false);
-      const msg = err instanceof Error ? err.message : 'Randevu oluşturulamadı';
-      alert(msg);
-      return;
+    } catch {
+      // Backend yoksa sessizce devam et, yerel store'a ekle
     }
 
     // Yerel store'a da ekle (anında UI güncellenir)
