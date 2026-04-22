@@ -35,20 +35,20 @@ async function request<T>(
 // ─── Auth ────────────────────────────────────────────────────
 export const authApi = {
   register: (data: { name: string; email: string; phone: string; password: string }) =>
-    request<{ token: string; user: ApiUser }>('/api/auth/register', {
+    request<{ token: string; user: ApiUser }>('/api/auth?action=register', {
       method: 'POST', body: JSON.stringify(data),
     }),
   login: (emailOrPhone: string, password: string) =>
-    request<{ token: string; user: ApiUser }>('/api/auth/login', {
+    request<{ token: string; user: ApiUser }>('/api/auth?action=login', {
       method: 'POST', body: JSON.stringify({ emailOrPhone, password }),
     }),
   adminLogin: (password: string) =>
-    request<{ token: string }>('/api/auth/admin-login', {
+    request<{ token: string }>('/api/auth?action=admin-login', {
       method: 'POST', body: JSON.stringify({ password }),
     }),
-  me: () => request<ApiUser>('/api/auth/me'),
+  me: () => request<ApiUser>('/api/auth?action=me'),
   updateMe: (patch: Partial<ApiUser>) =>
-    request<ApiUser>('/api/auth/me', { method: 'PATCH', body: JSON.stringify(patch) }),
+    request<ApiUser>('/api/auth?action=me', { method: 'PATCH', body: JSON.stringify(patch) }),
 };
 
 // ─── Services ────────────────────────────────────────────────
@@ -106,10 +106,10 @@ export const reviewsApi = {
 // ─── Customers (admin) ───────────────────────────────────────
 export const customersApi = {
   list: () => request<ApiUser[]>('/api/customers'),
-  notes: (phone?: string) => request<ApiCustomerNote[]>(`/api/customers/notes${phone ? '?phone=' + phone : ''}`),
+  notes: (phone?: string) => request<ApiCustomerNote[]>(`/api/customers?notes=1${phone ? '&phone=' + phone : ''}`),
   addNote: (customerPhone: string, text: string) =>
-    request<ApiCustomerNote>('/api/customers/notes', { method: 'POST', body: JSON.stringify({ customerPhone, text }) }),
-  deleteNote: (id: string) => request<void>(`/api/customers/notes/${id}`, { method: 'DELETE' }),
+    request<ApiCustomerNote>('/api/customers?notes=1', { method: 'POST', body: JSON.stringify({ customerPhone, text }) }),
+  deleteNote: (id: string) => request<void>(`/api/customers?notes=1&id=${id}`, { method: 'DELETE' }),
 };
 
 // ─── API Types ───────────────────────────────────────────────
