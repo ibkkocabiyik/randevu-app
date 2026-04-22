@@ -38,41 +38,6 @@ export default function Login() {
             <p className="text-sm text-gray-400 mt-1">Admin şifrenizi girin</p>
           </div>
 
-          {/* Demo hesap - akordiyon */}
-          <div className="mb-5 rounded-xl border border-indigo-100 dark:border-indigo-500/20 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowDemo(v => !v)}
-              className="flex w-full items-center justify-between px-3.5 py-2.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
-            >
-              <span className="text-[0.75rem] font-semibold text-indigo-600 dark:text-indigo-400">Test hesaplarını göster</span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14" height="14"
-                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                strokeLinecap="round" strokeLinejoin="round"
-                className={`text-indigo-500 dark:text-indigo-400 transition-transform duration-200 ${showDemo ? 'rotate-180' : ''}`}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            {showDemo && (
-              <div className="p-3 bg-indigo-50/50 dark:bg-indigo-500/5 border-t border-indigo-100 dark:border-indigo-500/20">
-                <button
-                  type="button"
-                  onClick={() => setPassword('admin123')}
-                  className="flex w-full items-center justify-between rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-white/5 px-3 py-2 text-left transition hover:border-indigo-400 dark:hover:border-indigo-400/60"
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-gray-800 dark:text-white">Yönetici</p>
-                    <p className="text-[11px] text-gray-400 dark:text-gray-500">Şifre: admin123</p>
-                  </div>
-                  <span className="text-[11px] font-medium text-indigo-500 dark:text-indigo-400">Doldur →</span>
-                </button>
-              </div>
-            )}
-          </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -114,6 +79,43 @@ export default function Login() {
               {loading && <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
               Giriş Yap
             </button>
+
+            <div className="rounded-xl border border-indigo-100 dark:border-indigo-500/20 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setShowDemo(v => !v)}
+                className="flex w-full items-center justify-between px-3.5 py-2.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors"
+              >
+                <span className="text-[0.75rem] font-semibold text-indigo-600 dark:text-indigo-400">Test hesaplarını göster</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14" height="14"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  className={`text-indigo-500 dark:text-indigo-400 transition-transform duration-200 ${showDemo ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div
+                className="border-t border-indigo-100 dark:border-indigo-500/20 overflow-hidden transition-all duration-300 ease-in-out"
+                style={{ maxHeight: showDemo ? '120px' : '0px', opacity: showDemo ? 1 : 0 }}
+              >
+                <div className="p-3 bg-indigo-50/50 dark:bg-indigo-500/5">
+                  <button
+                    type="button"
+                    onClick={() => setPassword('admin123')}
+                    className="flex w-full items-center justify-between rounded-lg border border-indigo-200 dark:border-indigo-500/30 bg-white dark:bg-white/5 px-3 py-2 text-left transition hover:border-indigo-400 dark:hover:border-indigo-400/60"
+                  >
+                    <div>
+                      <p className="text-xs font-semibold text-gray-800 dark:text-white">Yönetici</p>
+                      <p className="text-[11px] text-gray-400 dark:text-gray-500">Şifre: admin123</p>
+                    </div>
+                    <span className="text-[11px] font-medium text-indigo-500 dark:text-indigo-400">Doldur →</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </form>
 
           <div className="mt-5 flex items-center gap-3">
