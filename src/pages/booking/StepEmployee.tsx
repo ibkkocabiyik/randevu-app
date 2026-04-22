@@ -4,17 +4,43 @@ import { useReviewStore } from '../../store/reviews';
 import { useNavigate } from 'react-router-dom';
 import { User, Clock, ChevronRight, ArrowLeft, Scissors, Star, CalendarCheck } from 'lucide-react';
 
+function SkeletonEmployee() {
+  return (
+    <div className="w-full flex items-center gap-4 bg-white dark:bg-[#1a1d27] border border-gray-100 dark:border-gray-800/60 rounded-2xl px-4 py-4 animate-pulse">
+      <div className="w-12 h-12 rounded-2xl bg-gray-100 dark:bg-gray-800 shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-1/3" />
+        <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2" />
+      </div>
+    </div>
+  );
+}
+
 export default function StepEmployee() {
   const { booking, setBooking } = useStore();
-  const { employees, services, appointments, reviews: dataReviews } = useData();
+  const { employees, services, appointments, reviews: dataReviews, loading } = useData();
   const legacyReviews = useReviewStore(s => s.reviews);
   const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const navigate = useNavigate();
 
   const service  = services.find(s => s.id === booking.serviceId);
-  const eligible = employees.filter(e => service && e.serviceIds.includes(service.id));
+
+  // Services henüz yüklenmediyse bekle (skeleton göster)
+  if (loading.services && services.length === 0) {
+    return (
+      <div className="space-y-5 pb-4">
+        <div>
+          <button onClick={() => navigate('/book')} className="flex items-center gap-1.5 text-sm text-gray-400 mb-3 -ml-0.5"><ArrowLeft size={15} /> Geri</button>
+          <div className="h-8 bg-gray-100 dark:bg-gray-800 rounded-xl w-1/2 animate-pulse" />
+        </div>
+        <div className="space-y-2.5">{[1, 2].map(i => <SkeletonEmployee key={i} />)}</div>
+      </div>
+    );
+  }
 
   if (!service) { navigate('/book'); return null; }
+
+  const eligible = employees.filter(e => e.serviceIds.includes(service.id));
 
   function select(id: string) {
     setBooking({ employeeId: id, date: null, startTime: null });
@@ -28,6 +54,8 @@ export default function StepEmployee() {
     return { done, avg, reviewCount: rs.length };
   }
 
+  const isLoading = loading.employees && employees.length === 0;
+
   return (
     <div className="space-y-5 pb-4">
       <div>
@@ -38,8 +66,11 @@ export default function StepEmployee() {
           <span className="text-xs text-gray-400">{service.durationMinutes} dk · {service.price} ₺</span>
         </div>
       </div>
+
       <div className="space-y-2.5">
-        {eligible.length === 0 ? (
+        {isLoading ? (
+          [1, 2].map(i => <SkeletonEmployee key={i} />)
+        ) : eligible.length === 0 ? (
           <div className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-gray-100 dark:border-gray-800/60 p-10 text-center">
             <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-3"><User size={20} className="text-gray-400" /></div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Bu hizmet için müsait personel yok</p>

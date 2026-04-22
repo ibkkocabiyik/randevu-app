@@ -6,6 +6,27 @@ import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { getAllSlots } from '../../utils/slots';
 import { cn } from '../../lib/utils';
 
+function SkeletonSlots() {
+  return (
+    <div className="flex flex-col gap-5 pb-4 animate-pulse">
+      <div>
+        <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-16 mb-3" />
+        <div className="h-8 bg-gray-100 dark:bg-gray-800 rounded-xl w-32 mb-2" />
+        <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-48" />
+      </div>
+      <div className="flex gap-2 overflow-hidden">
+        {[1,2,3,4,5].map(i => <div key={i} className="shrink-0 w-12 h-16 bg-gray-100 dark:bg-gray-800 rounded-2xl" />)}
+      </div>
+      <div>
+        <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-12 mb-2" />
+        <div className="grid grid-cols-4 gap-2">
+          {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-10 bg-gray-100 dark:bg-gray-800 rounded-xl" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function isoToday() { return new Date().toISOString().split('T')[0]; }
 function addDays(iso: string, n: number) {
   const d = new Date(iso); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0];
@@ -16,10 +37,13 @@ const DAYS   = ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'];
 
 export default function StepDateTime() {
   const { booking, setBooking } = useStore();
-  const { services, employees, appointments } = useData();
+  const { services, employees, appointments, loading } = useData();
   const navigate = useNavigate();
   const today = isoToday();
   const [selectedDate, setSelectedDate] = useState(booking.date ?? today);
+
+  const isLoading = (loading.services && services.length === 0) || (loading.employees && employees.length === 0);
+  if (isLoading) return <SkeletonSlots />;
 
   const service  = services.find(s => s.id === booking.serviceId);
   const employee = employees.find(e => e.id === booking.employeeId);

@@ -14,9 +14,22 @@ const CATEGORY_META: Record<Service['category'], { label: string; icon: React.Re
 };
 const ICON_COLOR: Record<Service['category'], string> = { sac: 'text-indigo-500', sakal: 'text-purple-500', bakim: 'text-emerald-500' };
 
+function SkeletonCard() {
+  return (
+    <div className="w-full flex items-center gap-4 bg-white dark:bg-[#1a1d27] border border-gray-100 dark:border-gray-800/60 rounded-2xl px-4 py-4 animate-pulse">
+      <div className="w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-800 shrink-0" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-1/2" />
+        <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/4" />
+      </div>
+      <div className="h-5 w-14 bg-gray-100 dark:bg-gray-800 rounded" />
+    </div>
+  );
+}
+
 export default function StepService() {
   const { setBooking } = useStore();
-  const { services, reviews: dataReviews } = useData();
+  const { services, reviews: dataReviews, loading } = useData();
   const legacyReviews = useReviewStore(s => s.reviews);
   const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const { currentUser } = useUserAuth();
@@ -39,6 +52,7 @@ export default function StepService() {
   }
 
   const hasFavs = favIds.some(id => services.find(s => s.id === id));
+  const isLoading = loading.services && services.length === 0;
 
   return (
     <div className="space-y-6 pb-4">
@@ -46,29 +60,45 @@ export default function StepService() {
         <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Hizmet Seçin</h1>
         <p className="text-sm text-gray-400 mt-1">Size uygun hizmeti seçerek başlayın</p>
       </div>
-      {hasFavs && (
+
+      {isLoading ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-amber-500">
-            <Heart size={12} className="fill-amber-400 text-amber-400" /> Favorilerim
-          </div>
-          {services.filter(s => favIds.includes(s.id)).map(s => (
-            <ServiceCard key={s.id} s={s} meta={CATEGORY_META[s.category]} avg={avgRating(s.id)} isFav onSelect={select} />
-          ))}
+          {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
         </div>
-      )}
-      {Object.entries(grouped).map(([cat, list]) => {
-        const meta = CATEGORY_META[cat as Service['category']];
-        const nonFavList = hasFavs ? list.filter(s => !favIds.includes(s.id)) : list;
-        if (!nonFavList.length) return null;
-        return (
-          <div key={cat} className="space-y-2">
-            <div className={cn('inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full', meta.pillCls)}>
-              {meta.icon}{meta.label}
-            </div>
-            {nonFavList.map(s => <ServiceCard key={s.id} s={s} meta={meta} avg={avgRating(s.id)} onSelect={select} />)}
+      ) : services.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <Scissors size={28} className="text-gray-300 dark:text-gray-600" />
           </div>
-        );
-      })}
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Henüz hizmet tanımlanmamış</p>
+        </div>
+      ) : (
+        <>
+          {hasFavs && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-amber-500">
+                <Heart size={12} className="fill-amber-400 text-amber-400" /> Favorilerim
+              </div>
+              {services.filter(s => favIds.includes(s.id)).map(s => (
+                <ServiceCard key={s.id} s={s} meta={CATEGORY_META[s.category]} avg={avgRating(s.id)} isFav onSelect={select} />
+              ))}
+            </div>
+          )}
+          {Object.entries(grouped).map(([cat, list]) => {
+            const meta = CATEGORY_META[cat as Service['category']];
+            const nonFavList = hasFavs ? list.filter(s => !favIds.includes(s.id)) : list;
+            if (!nonFavList.length) return null;
+            return (
+              <div key={cat} className="space-y-2">
+                <div className={cn('inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full', meta.pillCls)}>
+                  {meta.icon}{meta.label}
+                </div>
+                {nonFavList.map(s => <ServiceCard key={s.id} s={s} meta={meta} avg={avgRating(s.id)} onSelect={select} />)}
+              </div>
+            );
+          })}
+        </>
+      )}
     </div>
   );
 }
