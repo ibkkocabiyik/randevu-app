@@ -206,12 +206,12 @@ export default function StepConfirm() {
       {/* Hizmet özeti */}
       <div className="bg-white dark:bg-[#1a1d27] rounded-2xl border border-gray-100 dark:border-gray-800/60 p-5 space-y-3.5">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-1">Hizmet Detayı</p>
-        <SummaryRow icon={<Scissors size={16} />} label={service.name} sub={`${service.price} ₺`} accent />
-        <SummaryRow icon={<User size={16} />} label={employee.name} sub={`${service.durationMinutes} dk`} />
+        <SummaryRow icon={<Scissors size={16} />} label={service!.name} sub={`${service!.price} ₺`} accent />
+        <SummaryRow icon={<User size={16} />} label={employee!.name} sub={`${service!.durationMinutes} dk`} />
         <div className="h-px bg-gray-100 dark:bg-gray-700/60" />
         <SummaryRow
           icon={<CalendarDays size={16} />}
-          label={new Date(booking.date).toLocaleDateString('tr-TR', {
+          label={new Date(booking.date!).toLocaleDateString('tr-TR', {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
           })}
         />
@@ -229,9 +229,9 @@ export default function StepConfirm() {
             Düzenle <ChevronRight size={11} />
           </button>
         </div>
-        <SummaryRow icon={<User size={16} />} label={currentUser.name} />
-        <SummaryRow icon={<Phone size={16} />} label={currentUser.phone} />
-        <SummaryRow icon={<Mail size={16} />} label={currentUser.email} />
+        <SummaryRow icon={<User size={16} />} label={currentUser!.name} />
+        <SummaryRow icon={<Phone size={16} />} label={currentUser!.phone} />
+        <SummaryRow icon={<Mail size={16} />} label={currentUser!.email} />
       </div>
 
       {/* Fiyat özeti */}
@@ -239,13 +239,13 @@ export default function StepConfirm() {
         <div className="flex items-center justify-between px-5 py-4">
           <span className="text-sm font-medium text-indigo-700 dark:text-indigo-300">Toplam Tutar</span>
           <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums">
-            {service.price} ₺
+            {service!.price} ₺
           </span>
         </div>
         <div className="flex items-center gap-2 px-5 py-2.5 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-100 dark:border-amber-800/30">
           <Star size={13} className="text-amber-500 fill-amber-400" />
           <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
-            Bu randevudan <span className="font-black">{Math.round(service.price * 0.1)} puan</span> kazanacaksınız
+            Bu randevudan <span className="font-black">{Math.round(service!.price * 0.1)} puan</span> kazanacaksınız
           </span>
         </div>
       </div>

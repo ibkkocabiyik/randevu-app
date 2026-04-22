@@ -1,4 +1,5 @@
 import { useStore } from '../../store';
+import { useReviewStore } from '../../store/reviews';
 import { useUserAuth } from '../../store/userAuth';
 import { useNavigate } from 'react-router-dom';
 import { Scissors, Wind, Leaf, ChevronRight, Clock, Star, Heart } from 'lucide-react';
@@ -18,7 +19,8 @@ const ICON_COLOR: Record<Service['category'], string> = {
 };
 
 export default function StepService() {
-  const { services, setBooking, reviews } = useStore();
+  const { services, setBooking } = useStore();
+  const { reviews } = useReviewStore();
   const { currentUser } = useUserAuth();
   const navigate = useNavigate();
 

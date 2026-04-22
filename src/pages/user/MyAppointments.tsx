@@ -247,11 +247,11 @@ export default function MyAppointments() {
 
   const upcoming = myAppts.filter(a =>
     a.date >= today && a.status !== 'cancelled' && a.status !== 'completed'
-    && a.status !== 'no-show' && a.status !== 'noshow'
+    && a.status !== 'noshow'
   );
   const past = myAppts.filter(a =>
     a.date < today || a.status === 'cancelled' || a.status === 'completed'
-    || a.status === 'no-show' || a.status === 'noshow'
+    || a.status === 'noshow'
   );
 
   const shown = tab === 'upcoming' ? upcoming : past;
@@ -271,7 +271,7 @@ export default function MyAppointments() {
       addNotification({
         type: 'booking_cancelled',
         title: 'Randevunuz iptal edildi',
-        body: svc ? `${svc.name} · ${appt.date} ${appt.startTime}` : undefined,
+        body: svc ? `${svc.name} · ${appt.date} ${appt.startTime}` : '',
         appointmentId: id,
       });
     }

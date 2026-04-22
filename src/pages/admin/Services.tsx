@@ -78,7 +78,7 @@ function ServiceForm({ initial, onSave, onCancel }: {
   );
 }
 
-function ReviewsModal({ service, reviews }: { service: Service; reviews: Review[] }) {
+function ReviewsModal({ service: _service, reviews }: { service: Service; reviews: Review[] }) {
   const avg = reviews.length
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : null;

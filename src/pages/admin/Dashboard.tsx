@@ -433,7 +433,7 @@ export default function Dashboard() {
   const completed = appointments.filter(a => a.status === 'completed').length;
   const cancelled = appointments.filter(a => a.status === 'cancelled').length;
   const pending = appointments.filter(a => a.status === 'pending').length;
-  const noshow = appointments.filter(a => a.status === 'noshow' || a.status === 'no-show').length;
+  const noshow = appointments.filter(a => a.status === 'noshow').length;
   const todayAppts = appointments.filter(a => a.date === today && a.status !== 'cancelled').length;
 
   const totalRevenue = appointments

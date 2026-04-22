@@ -3,7 +3,7 @@ import { useStore } from '../../store';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { useSwal } from '../../lib/swal';
-import { Search, CalendarDays, TrendingUp, Phone, MessageSquare, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Search, CalendarDays, TrendingUp, Phone, MessageSquare, Plus, Pencil, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
@@ -26,7 +26,7 @@ interface CustomerSummary {
 
 export default function Customers() {
   const {
-    appointments, services, employees,
+    appointments, services,
     customerNotes, addCustomerNote, updateCustomerNote, deleteCustomerNote,
   } = useStore();
   const swal = useSwal();

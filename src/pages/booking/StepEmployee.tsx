@@ -1,10 +1,10 @@
 import { useStore } from '../../store';
+import { useReviewStore } from '../../store/reviews';
 import { useNavigate } from 'react-router-dom';
 import { User, Clock, ChevronRight, ArrowLeft, Scissors, Star, CalendarCheck } from 'lucide-react';
-import { cn } from '../../lib/utils';
-
 export default function StepEmployee() {
-  const { employees, services, appointments, reviews, booking, setBooking } = useStore();
+  const { employees, services, appointments, booking, setBooking } = useStore();
+  const { reviews } = useReviewStore();
   const navigate = useNavigate();
 
   const service  = services.find(s => s.id === booking.serviceId);

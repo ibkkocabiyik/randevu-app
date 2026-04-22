@@ -3,7 +3,7 @@ import { useStore } from '../../store';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { useSwal } from '../../lib/swal';
-import { Search, SlidersHorizontal, CirclePlus, Trash2, Pencil, Eye, CalendarDays, Clock, User } from 'lucide-react';
+import { Search, CirclePlus, Trash2, Pencil, Eye, CalendarDays, Clock, User } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import type { Appointment } from '../../types';
 
@@ -181,8 +181,6 @@ export default function Appointments() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
-
   const [detailAppt, setDetailAppt] = useState<Appointment | null>(null);
   const [editAppt, setEditAppt] = useState<Appointment | null>(null);
   const [showNew, setShowNew] = useState(false);

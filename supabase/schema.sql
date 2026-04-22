@@ -69,16 +69,7 @@ create table if not exists appointments (
   status          text not null default 'pending'
                     check (status in ('pending','confirmed','cancelled','completed','noshow')),
   notes           text,
-  created_at      timestamptz default now(),
-  -- Çakışma önleme: aynı çalışan, aynı gün, çakışan saat olamaz
-  constraint no_overlap exclude using gist (
-    employee_id with =,
-    date with =,
-    tsrange(
-      (date + start_time)::timestamp,
-      (date + end_time)::timestamp
-    ) with &&
-  ) where (status not in ('cancelled','noshow'))
+  created_at      timestamptz default now()
 );
 
 create index if not exists idx_appointments_employee_date on appointments(employee_id, date);
