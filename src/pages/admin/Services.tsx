@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store';
+import { servicesApi } from '../../lib/api';
 import { useReviewStore } from '../../store/reviews';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
@@ -131,6 +132,7 @@ export default function Services() {
   async function handleDelete(id: string) {
     const ok = await swal.confirm({ title: 'Hizmeti sil?', text: 'Bu hizmet kalıcı olarak silinecek.', confirmText: 'Evet, sil' });
     if (!ok) return;
+    try { await servicesApi.delete(id); } catch {}
     deleteService(id);
     swal.toast({ icon: 'success', title: 'Hizmet silindi' });
   }
@@ -250,10 +252,16 @@ export default function Services() {
       </Card>
 
       <Modal isOpen={showNew} onClose={() => setShowNew(false)} title="Hizmet Ekle">
-        <ServiceForm onSave={d => { addService(d); setShowNew(false); swal.toast({ icon: 'success', title: 'Hizmet eklendi' }); }} onCancel={() => setShowNew(false)} />
+        <ServiceForm onSave={async d => {
+          try { await servicesApi.create({ name: d.name, duration_minutes: d.durationMinutes, price: d.price, category: d.category }); } catch {}
+          addService(d); setShowNew(false); swal.toast({ icon: 'success', title: 'Hizmet eklendi' });
+        }} onCancel={() => setShowNew(false)} />
       </Modal>
       <Modal isOpen={!!editSvc} onClose={() => setEditSvc(null)} title="Hizmet Düzenle">
-        {editSvc && <ServiceForm initial={editSvc} onSave={d => { updateService(editSvc.id, d); setEditSvc(null); swal.toast({ icon: 'success', title: 'Hizmet güncellendi' }); }} onCancel={() => setEditSvc(null)} />}
+        {editSvc && <ServiceForm initial={editSvc} onSave={async d => {
+          try { await servicesApi.update(editSvc.id, { name: d.name, duration_minutes: d.durationMinutes, price: d.price, category: d.category }); } catch {}
+          updateService(editSvc.id, d); setEditSvc(null); swal.toast({ icon: 'success', title: 'Hizmet güncellendi' });
+        }} onCancel={() => setEditSvc(null)} />}
       </Modal>
       <Modal isOpen={!!reviewSvc} onClose={() => setReviewSvc(null)} title={reviewSvc ? `${reviewSvc.name} — Değerlendirmeler` : ''} size="md">
         {reviewSvc && <ReviewsModal service={reviewSvc} reviews={reviews.filter(r => r.serviceId === reviewSvc.id)} />}

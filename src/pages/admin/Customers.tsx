@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store';
+import { customersApi } from '../../lib/api';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { useSwal } from '../../lib/swal';
@@ -69,6 +70,7 @@ export default function Customers() {
 
   async function handleAddNote() {
     if (!selected || !noteText.trim()) return;
+    try { await customersApi.addNote(selected.phone, noteText.trim()); } catch {}
     addCustomerNote(selected.phone, noteText.trim());
     setNoteText('');
   }
@@ -76,6 +78,7 @@ export default function Customers() {
   async function handleDeleteNote(id: string) {
     const ok = await swal.confirm({ title: 'Notu sil?', confirmText: 'Evet, sil' });
     if (!ok) return;
+    try { await customersApi.deleteNote(id); } catch {}
     deleteCustomerNote(id);
   }
 

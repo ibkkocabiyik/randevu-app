@@ -58,8 +58,7 @@ function LoginForm() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
-    const { ok, error: err } = login(emailOrPhone, password);
+    const { ok, error: err } = await login(emailOrPhone, password);
     setLoading(false);
     if (ok) navigate(nextPath, { replace: true });
     else setError(err ?? 'Giriş başarısız.');
@@ -106,29 +105,6 @@ function LoginForm() {
         Giriş Yap
       </button>
 
-      {/* Demo hesaplar */}
-      <div className="mt-5 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-500/20 bg-indigo-50/60 dark:bg-indigo-500/5 p-3.5">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2.5">Demo Hesaplar — Şifre: demo123</p>
-        <div className="space-y-1.5">
-          {[
-            { name: 'Ali Yılmaz',   email: 'ali@demo.com'    },
-            { name: 'Fatma Kaya',   email: 'fatma@demo.com'  },
-            { name: 'Emre Demir',   email: 'emre@demo.com'   },
-            { name: 'Zeynep Çelik', email: 'zeynep@demo.com' },
-            { name: 'Murat Şahin',  email: 'murat@demo.com'  },
-          ].map(u => (
-            <button
-              key={u.email}
-              type="button"
-              onClick={() => { setEmailOrPhone(u.email); setPassword('demo123'); }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-white dark:bg-white/[0.04] border border-indigo-100 dark:border-indigo-500/10 hover:border-indigo-400/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-all group"
-            >
-              <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">{u.name}</span>
-              <span className="text-[11px] text-gray-400 group-hover:text-indigo-500 transition-colors">{u.email} →</span>
-            </button>
-          ))}
-        </div>
-      </div>
     </form>
   );
 }
@@ -152,8 +128,7 @@ function RegisterForm() {
     setError('');
     if (form.password.length < 6) { setError('Şifre en az 6 karakter olmalıdır.'); return; }
     setLoading(true);
-    await new Promise(r => setTimeout(r, 500));
-    const { ok, error: err } = register(form);
+    const { ok, error: err } = await register(form);
     setLoading(false);
     if (ok) navigate(nextPath, { replace: true });
     else setError(err ?? 'Kayıt başarısız.');

@@ -1,13 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-// Hardcoded admin credentials — replace with real auth in Faz 2
-const ADMIN_EMAIL = 'admin@kuafor.com';
-const ADMIN_PASSWORD = 'admin123';
+import { authApi, setToken, clearToken } from '../lib/api';
 
 interface AuthStore {
   isAuthenticated: boolean;
-  login: (email: string, password: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -15,12 +12,22 @@ export const useAuth = create<AuthStore>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      login: (email, password) => {
-        const ok = email === ADMIN_EMAIL && password === ADMIN_PASSWORD;
-        if (ok) set({ isAuthenticated: true });
-        return ok;
+
+      login: async (_email: string, password: string) => {
+        try {
+          const { token } = await authApi.adminLogin(password);
+          setToken(token);
+          set({ isAuthenticated: true });
+          return true;
+        } catch {
+          return false;
+        }
       },
-      logout: () => set({ isAuthenticated: false }),
+
+      logout: () => {
+        clearToken();
+        set({ isAuthenticated: false });
+      },
     }),
     { name: 'randevu-auth' }
   )

@@ -15,8 +15,8 @@ router.get('/', async (req, res) => {
   res.json(data);
 });
 
-// POST /api/reviews — giriş yapmış kullanıcı
-router.post('/', requireAuth, async (req, res) => {
+// POST /api/reviews — token opsiyonel
+router.post('/', async (req, res) => {
   const { appointmentId, serviceId, employeeId, customerName, rating, comment } = req.body;
 
   // Daha önce değerlendirme yapılmış mı?

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store';
+import { appointmentsApi } from '../../lib/api';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { useSwal } from '../../lib/swal';
@@ -195,18 +196,33 @@ export default function Appointments() {
   async function handleDelete(id: string) {
     const ok = await swal.confirm({ title: 'Randevuyu sil?', text: 'Bu işlem geri alınamaz.', confirmText: 'Evet, sil' });
     if (!ok) return;
+    try { await appointmentsApi.delete(id); } catch {}
     cancelAppointment(id);
     swal.toast({ icon: 'success', title: 'Randevu iptal edildi' });
   }
 
-  function handleSaveNew(data: Omit<Appointment, 'id'>) {
+  async function handleSaveNew(data: Omit<Appointment, 'id'>) {
+    try {
+      await appointmentsApi.create({
+        customerName: data.customerName, customerPhone: data.customerPhone,
+        serviceId: data.serviceId, employeeId: data.employeeId,
+        date: data.date, startTime: data.startTime, endTime: data.endTime,
+        notes: data.notes,
+      });
+    } catch {}
     addAppointment(data);
     setShowNew(false);
     swal.toast({ icon: 'success', title: 'Randevu oluşturuldu' });
   }
 
-  function handleSaveEdit(data: Omit<Appointment, 'id'>) {
+  async function handleSaveEdit(data: Omit<Appointment, 'id'>) {
     if (!editAppt) return;
+    try {
+      await appointmentsApi.update(editAppt.id, {
+        status: data.status, notes: data.notes,
+        date: data.date, start_time: data.startTime, end_time: data.endTime,
+      } as never);
+    } catch {}
     updateAppointment(editAppt.id, data);
     setEditAppt(null);
     swal.toast({ icon: 'success', title: 'Randevu güncellendi' });

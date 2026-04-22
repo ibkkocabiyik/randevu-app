@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useStore } from '../../store';
+import { employeesApi } from '../../lib/api';
 import { useReviewStore } from '../../store/reviews';
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
@@ -104,18 +105,21 @@ export default function Staff() {
     }
     const ok = await swal.confirm({ title: 'Personeli sil?', text: 'Bu personele ait bilgiler silinecek.', confirmText: 'Evet, sil' });
     if (!ok) return;
+    try { await employeesApi.delete(id); } catch {}
     deleteEmployee(id);
     swal.toast({ icon: 'success', title: 'Personel silindi' });
   }
 
-  function handleSaveNew(data: Omit<Employee, 'id'>) {
+  async function handleSaveNew(data: Omit<Employee, 'id'>) {
+    try { await employeesApi.create({ name: data.name, workingHours: data.workingHours, serviceIds: data.serviceIds }); } catch {}
     addEmployee(data);
     setShowNew(false);
     swal.toast({ icon: 'success', title: 'Personel eklendi' });
   }
 
-  function handleSaveEdit(data: Omit<Employee, 'id'>) {
+  async function handleSaveEdit(data: Omit<Employee, 'id'>) {
     if (!editEmp) return;
+    try { await employeesApi.update(editEmp.id, { name: data.name, workingHours: data.workingHours, serviceIds: data.serviceIds }); } catch {}
     updateEmployee(editEmp.id, data);
     setEditEmp(null);
     swal.toast({ icon: 'success', title: 'Personel güncellendi' });

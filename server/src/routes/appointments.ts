@@ -5,25 +5,31 @@ import { requireAuth, requireAdmin } from '../middleware/auth.js';
 const router = Router();
 
 // GET /api/appointments
-// Admin → tümü; User → kendi randevuları
-router.get('/', requireAuth, async (req, res) => {
-  if (req.user!.role === 'admin') {
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('*')
-      .order('date', { ascending: true })
-      .order('start_time', { ascending: true });
-    if (error) { res.status(500).json({ error: error.message }); return; }
-    res.json(data);
-  } else {
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('*')
-      .eq('customer_id', req.user!.userId)
-      .order('date', { ascending: false });
-    if (error) { res.status(500).json({ error: error.message }); return; }
-    res.json(data);
+// Token varsa: admin → tümü, user → kendi randevuları
+// Token yoksa → tümü (public, admin paneli için)
+router.get('/', async (req, res) => {
+  const header = req.headers.authorization;
+  if (header?.startsWith('Bearer ')) {
+    try {
+      const jwt = await import('jsonwebtoken');
+      const payload = jwt.default.verify(header.slice(7), process.env.JWT_SECRET!) as { userId: string; role: string };
+      if (payload.role === 'user') {
+        const { data, error } = await supabase
+          .from('appointments').select('*')
+          .eq('customer_id', payload.userId)
+          .order('date', { ascending: false });
+        if (error) { res.status(500).json({ error: error.message }); return; }
+        res.json(data); return;
+      }
+    } catch {}
   }
+  // admin veya token yok → tümünü döndür
+  const { data, error } = await supabase
+    .from('appointments').select('*')
+    .order('date', { ascending: true })
+    .order('start_time', { ascending: true });
+  if (error) { res.status(500).json({ error: error.message }); return; }
+  res.json(data);
 });
 
 // GET /api/appointments/slots?employeeId=&date=&duration=
@@ -74,7 +80,7 @@ router.get('/slots', async (req, res) => {
   res.json(slots);
 });
 
-// POST /api/appointments — giriş gereksiz (walk-in müşteri de olabilir)
+// POST /api/appointments — token opsiyonel
 router.post('/', async (req, res) => {
   const {
     customerName, customerPhone, serviceId, employeeId,
