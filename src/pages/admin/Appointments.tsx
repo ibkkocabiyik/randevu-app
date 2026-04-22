@@ -148,7 +148,7 @@ function AppointmentDetail({ appt, onClose }: { appt: Appointment; onClose: () =
 }
 
 export default function Appointments() {
-  const { appointments, services, employees, upsertAppointment, removeAppointment, loading } = useData();
+  const { appointments, services, employees, upsertAppointment, removeAppointment, initialized } = useData();
   const swal = useSwal();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -235,7 +235,7 @@ export default function Appointments() {
       </Card>
 
       <Card padding="none">
-        {loading.appointments ? (
+        {!initialized ? (
           <div className="py-16 text-center text-sm text-gray-400">Yükleniyor…</div>
         ) : (
           <>

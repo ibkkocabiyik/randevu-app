@@ -26,7 +26,7 @@ interface CustomerSummary {
 }
 
 export default function Customers() {
-  const { appointments, services, customerNotes, setCustomerNotes } = useData();
+  const { appointments, services, customerNotes, setCustomerNotes, initialized } = useData();
   const swal = useSwal();
   const [search, setSearch]     = useState('');
   const [selected, setSelected] = useState<CustomerSummary | null>(null);
@@ -113,6 +113,9 @@ export default function Customers() {
 
       {/* Desktop table */}
       <Card padding="none">
+        {!initialized ? (
+          <div className="py-16 text-center text-sm text-gray-400">Yükleniyor…</div>
+        ) : <>
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -187,6 +190,7 @@ export default function Customers() {
             </div>
           ))}
         </div>
+        </>}
       </Card>
 
       {/* Customer detail modal */}

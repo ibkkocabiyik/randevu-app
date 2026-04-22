@@ -36,7 +36,7 @@ function RatingBar({ rating, count, total }: { rating: number; count: number; to
 }
 
 export default function Reviews() {
-  const { services, employees, reviews: dataReviews } = useData();
+  const { services, employees, reviews: dataReviews, initialized } = useData();
   const legacyReviews = useReviewStore(s => s.reviews);
   const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const [filterService, setFilterService] = useState('');
@@ -75,6 +75,18 @@ export default function Reviews() {
   }).filter(s => s.count > 0).sort((a, b) => b.avg - a.avg);
 
   const selectCls = 'rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20';
+
+  if (!initialized) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Değerlendirmeler</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Müşteri yorumları ve puanlamaları</p>
+        </div>
+        <div className="py-16 text-center text-sm text-gray-400">Yükleniyor…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

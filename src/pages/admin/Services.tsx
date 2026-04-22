@@ -97,7 +97,7 @@ function ReviewsModal({ reviews }: { reviews: Review[] }) {
 }
 
 export default function Services() {
-  const { services, appointments, reviews: dataReviews, upsertService, removeService, loading } = useData();
+  const { services, appointments, reviews: dataReviews, upsertService, removeService, initialized } = useData();
   const legacyReviews = useReviewStore(s => s.reviews);
   const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const swal = useSwal();
@@ -149,7 +149,7 @@ export default function Services() {
       </div>
 
       <Card padding="none">
-        {loading.services ? (
+        {!initialized ? (
           <div className="py-16 text-center text-sm text-gray-400">Yükleniyor…</div>
         ) : (
           <>

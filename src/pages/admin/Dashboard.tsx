@@ -420,7 +420,7 @@ function QuickAction({ label, icon: Icon, iconColor, onClick }: {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { appointments, services, employees, reviews: dataReviews } = useData();
+  const { appointments, services, employees, reviews: dataReviews, initialized } = useData();
   const legacyReviews = useReviewStore(s => s.reviews);
   const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const { users } = useUserAuth();
@@ -538,6 +538,18 @@ export default function Dashboard() {
   const topCustomers = [...customerMap.values()]
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
+
+  if (!initialized) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">İstatistikler</h1>
+          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Hoş geldiniz, Admin</p>
+        </div>
+        <div className="py-16 text-center text-sm text-gray-400">Yükleniyor…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

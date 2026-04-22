@@ -76,6 +76,7 @@ interface DataState {
   reviews: Review[];
   customerNotes: CustomerNote[];
   loading: { appointments: boolean; services: boolean; employees: boolean; reviews: boolean };
+  initialized: boolean; // true after first fetchAll completes
 
   fetchAppointments: () => Promise<void>;
   fetchServices: () => Promise<void>;
@@ -106,13 +107,14 @@ export const useData = create<DataState>((set, get) => ({
   reviews: [],
   customerNotes: [],
   loading: { appointments: false, services: false, employees: false, reviews: false },
+  initialized: false,
 
   fetchAppointments: async () => {
     set(s => ({ loading: { ...s.loading, appointments: true } }));
     try {
       const data = await appointmentsApi.list();
       set({ appointments: data.map(toAppointment) });
-    } catch {}
+    } catch (e) { console.error('[data] fetchAppointments failed:', e); }
     set(s => ({ loading: { ...s.loading, appointments: false } }));
   },
 
@@ -121,7 +123,7 @@ export const useData = create<DataState>((set, get) => ({
     try {
       const data = await servicesApi.list();
       set({ services: data.map(toService) });
-    } catch {}
+    } catch (e) { console.error('[data] fetchServices failed:', e); }
     set(s => ({ loading: { ...s.loading, services: false } }));
   },
 
@@ -130,7 +132,7 @@ export const useData = create<DataState>((set, get) => ({
     try {
       const data = await employeesApi.list();
       set({ employees: data.map(toEmployee) });
-    } catch {}
+    } catch (e) { console.error('[data] fetchEmployees failed:', e); }
     set(s => ({ loading: { ...s.loading, employees: false } }));
   },
 
@@ -139,13 +141,14 @@ export const useData = create<DataState>((set, get) => ({
     try {
       const data = await reviewsApi.list();
       set({ reviews: data.map(toReview) });
-    } catch {}
+    } catch (e) { console.error('[data] fetchReviews failed:', e); }
     set(s => ({ loading: { ...s.loading, reviews: false } }));
   },
 
   fetchAll: async () => {
     const { fetchAppointments, fetchServices, fetchEmployees, fetchReviews } = get();
     await Promise.all([fetchAppointments(), fetchServices(), fetchEmployees(), fetchReviews()]);
+    set({ initialized: true });
   },
 
   setAppointments: (appointments) => set({ appointments }),

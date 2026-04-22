@@ -62,7 +62,7 @@ function EmployeeForm({ initial, onSave, onCancel }: {
 }
 
 export default function Staff() {
-  const { employees, services, appointments, reviews: dataReviews, upsertEmployee, removeEmployee, loading } = useData();
+  const { employees, services, appointments, reviews: dataReviews, upsertEmployee, removeEmployee, initialized } = useData();
   const legacyReviews = useReviewStore(s => s.reviews);
   const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
   const swal = useSwal();
@@ -127,7 +127,7 @@ export default function Staff() {
         </button>
       </div>
 
-      {loading.employees ? (
+      {!initialized ? (
         <div className="py-16 text-center text-sm text-gray-400">Yükleniyor…</div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
