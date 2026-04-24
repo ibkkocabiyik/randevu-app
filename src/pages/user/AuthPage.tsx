@@ -6,11 +6,11 @@ import { useTheme } from '../../store/theme';
 import { cn } from '../../lib/utils';
 
 const DEMO_USERS = [
-  { name: 'Ali Yılmaz',   email: 'ali@example.com',    password: 'demo1234' },
-  { name: 'Fatma Kaya',   email: 'fatma@example.com',  password: 'demo1234' },
-  { name: 'Emre Demir',   email: 'emre@example.com',   password: 'demo1234' },
-  { name: 'Zeynep Çelik', email: 'zeynep@example.com', password: 'demo1234' },
-  { name: 'Murat Şahin',  email: 'murat@example.com',  password: 'demo1234' },
+  { name: 'Ali Yılmaz',   email: 'ali@demo.com',    password: 'demo123' },
+  { name: 'Fatma Kaya',   email: 'fatma@demo.com',  password: 'demo123' },
+  { name: 'Emre Demir',   email: 'emre@demo.com',   password: 'demo123' },
+  { name: 'Zeynep Çelik', email: 'zeynep@demo.com', password: 'demo123' },
+  { name: 'Murat Şahin',  email: 'murat@demo.com',  password: 'demo123' },
 ];
 
 const inputCls = (icon = true) =>
