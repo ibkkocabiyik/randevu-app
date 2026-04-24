@@ -27,7 +27,9 @@ export function subscribeToChanges(handlers: {
       payload => handlers.onService?.(payload))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' },
       payload => handlers.onEmployee?.(payload))
-    .subscribe();
+    .subscribe((status) => {
+      console.log('[realtime] channel status:', status);
+    });
 
   return () => { supabase.removeChannel(channel); };
 }
