@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store';
 import { useData, toAppointment, toReview } from '../../lib/data';
@@ -35,8 +35,8 @@ function StatusPill({ status }: { status: string }) {
 }
 
 /* ── Reschedule modal ─────────────────────────────────────────────── */
-function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
-  const { employees, appointments, services, upsertAppointment } = useData();
+function RescheduleModal({ appt, onClose, onRescheduled }: { appt: Appointment; onClose: () => void; onRescheduled: (updated: Appointment) => void }) {
+  const { employees, appointments, services } = useData();
   const swal = useSwal();
   const employee = employees.find(e => e.id === appt.employeeId);
   const service  = services.find(s => s.id === appt.serviceId);
@@ -78,7 +78,7 @@ function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => 
         start_time: selectedTime,
         end_time: newEnd,
       } as never);
-      upsertAppointment(toAppointment(api));
+      onRescheduled(toAppointment(api));
     } catch (e: unknown) {
       swal.toast({ icon: 'error', title: (e as Error).message ?? 'Güncelleme başarısız' });
       return;
@@ -237,25 +237,54 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function MyAppointments() {
-  const { appointments, services, employees, upsertAppointment, reviews } = useData();
+  const { services, employees, reviews } = useData();
   const { addNotification } = useStore();
   const { currentUser } = useUserAuth();
-
-  const hasReview = (appointmentId: string) =>
-    reviews.some(r => r.appointmentId === appointmentId);
   const navigate = useNavigate();
   const swal = useSwal();
 
-  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
+  // Müşteri kendi randevularını doğrudan API'den çeker
+  const [myAppts, setMyAppts] = useState<Appointment[]>([]);
+  const [loadingAppts, setLoadingAppts] = useState(true);
 
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingAppts(true);
+    appointmentsApi.list()
+      .then(data => {
+        if (cancelled) return;
+        setMyAppts(
+          [...data.map(toAppointment)]
+            .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime))
+        );
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLoadingAppts(false); });
+    return () => { cancelled = true; };
+  }, [currentUser?.id]);
+
+  // Realtime: useData.appointments değişince (başka sekme/Supabase RT) yeniden çek
+  useEffect(() => {
+    const unsub = useData.subscribe(s => {
+      if (!currentUser) return;
+      appointmentsApi.list()
+        .then(data => setMyAppts(
+          [...data.map(toAppointment)]
+            .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime))
+        ))
+        .catch(() => {});
+    });
+    return unsub;
+  }, [currentUser]);
+
+  const hasReview = (appointmentId: string) =>
+    reviews.some(r => r.appointmentId === appointmentId);
+
+  const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
   const [reschedule, setReschedule] = useState<Appointment | null>(null);
   const [reviewing, setReviewing]   = useState<Appointment | null>(null);
 
   const today = new Date().toISOString().split('T')[0];
-
-  const myAppts = appointments
-    .filter(a => currentUser && a.customerPhone === currentUser.phone)
-    .sort((a, b) => b.date.localeCompare(a.date) || b.startTime.localeCompare(a.startTime));
 
   const upcoming = myAppts.filter(a =>
     a.date >= today && a.status !== 'cancelled' && a.status !== 'completed'
@@ -273,13 +302,21 @@ export default function MyAppointments() {
     .filter(a => a.status === 'completed')
     .reduce((s, a) => s + (services.find(sv => sv.id === a.serviceId)?.price ?? 0), 0);
 
+  function updateLocalAppt(id: string, patch: Partial<Appointment>) {
+    setMyAppts(prev => prev.map(a => a.id === id ? { ...a, ...patch } : a));
+  }
+
   async function handleCancel(id: string) {
     const ok = await swal.confirm({ title: 'Randevuyu iptal et?', text: 'Bu işlem geri alınamaz.', confirmText: 'Evet, iptal et' });
     if (!ok) return;
-    const appt = appointments.find(a => a.id === id);
-    if (appt) upsertAppointment({ ...appt, status: 'cancelled' });
-    try { await appointmentsApi.update(id, { status: 'cancelled' } as never); }
-    catch { if (appt) upsertAppointment(appt); }
+    const appt = myAppts.find(a => a.id === id);
+    updateLocalAppt(id, { status: 'cancelled' });
+    try {
+      await appointmentsApi.update(id, { status: 'cancelled' } as never);
+    } catch {
+      if (appt) updateLocalAppt(id, { status: appt.status });
+      return;
+    }
     if (appt) {
       const svc = services.find(s => s.id === appt.serviceId);
       addNotification({
@@ -302,6 +339,22 @@ export default function MyAppointments() {
     if (status === 'noshow' || status === 'no-show') return 'bg-orange-400';
     return 'bg-gray-300';
   };
+
+  if (loadingAppts) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Randevularım</h1>
+          <p className="mt-0.5 text-sm text-gray-400">Yükleniyor…</p>
+        </div>
+        <div className="space-y-3">
+          {[1,2,3].map(i => (
+            <div key={i} className="h-24 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -476,7 +529,7 @@ export default function MyAppointments() {
 
       {/* Reschedule modal */}
       <Modal isOpen={!!reschedule} onClose={() => setReschedule(null)} title="Yeniden Planla" size="md">
-        {reschedule && <RescheduleModal appt={reschedule} onClose={() => setReschedule(null)} />}
+        {reschedule && <RescheduleModal appt={reschedule} onClose={() => setReschedule(null)} onRescheduled={(updated) => { updateLocalAppt(updated.id, updated); setReschedule(null); }} />}
       </Modal>
 
       {/* Review modal */}
