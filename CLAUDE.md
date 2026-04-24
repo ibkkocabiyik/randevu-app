@@ -10,7 +10,7 @@ npm run build     # TypeScript derle + Vite production build
 npm run lint      # ESLint
 ```
 
-`vercel dev` ilk çalıştırmada Vercel hesabına login ister (`vercel login`). `.vercel/project.json` oluştuktan sonra sonraki çalıştırmalarda sorulmaz.
+`npm run dev` Vite'ı başlatır; `/api` istekleri `VITE_API_URL` env var'ına proxy edilir (varsayılan: `https://randevu-fawn.vercel.app`). Local'de farklı bir backend kullanmak istersen `.env.local`'deki `VITE_API_URL` değerini değiştir.
 
 ## Teknoloji Yığını
 

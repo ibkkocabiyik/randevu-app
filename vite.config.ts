@@ -54,7 +54,7 @@ function syncPlugin(): Plugin {
   };
 }
 
-const VERCEL_URL = process.env.VITE_API_URL ?? 'https://randevu-3lldvn4ok-ibkkocabiyik-projects.vercel.app';
+const VERCEL_URL = process.env.VITE_API_URL ?? 'https://randevu-fawn.vercel.app';
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), syncPlugin()],
