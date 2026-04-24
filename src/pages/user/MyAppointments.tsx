@@ -240,10 +240,14 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function MyAppointments() {
-  const { appointments, services, employees, upsertAppointment } = useData();
+  const { appointments, services, employees, upsertAppointment, reviews: dataReviews } = useData();
   const { addNotification } = useStore();
-  const { hasReview } = useReviewStore();
+  const { hasReview: hasReviewLocal } = useReviewStore();
   const { currentUser } = useUserAuth();
+
+  // API'den gelen reviews + localStorage fallback — her ikisini de kontrol et
+  const hasReview = (appointmentId: string) =>
+    hasReviewLocal(appointmentId) || dataReviews.some(r => r.appointmentId === appointmentId);
   const navigate = useNavigate();
   const swal = useSwal();
 
