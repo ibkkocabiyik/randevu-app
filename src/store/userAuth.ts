@@ -132,14 +132,6 @@ export const useUserAuth = create<UserAuthStore>()(
       },
 
       login: async (emailOrPhone, password) => {
-        // Önce seed/yerel kullanıcı kontrolü
-        const localUser = get().users.find(
-          u => (u.email === emailOrPhone || u.phone === emailOrPhone) && u.passwordHash === password
-        );
-        if (localUser) {
-          set({ currentUser: localUser });
-          return { ok: true };
-        }
         try {
           const { token, user } = await authApi.login(emailOrPhone, password);
           setToken(token);
@@ -192,6 +184,14 @@ export const useUserAuth = create<UserAuthStore>()(
   )
 );
 
+// UUID v4 kontrolü — seed user'lar ('u1' vb.) ile gelen eski oturumları geçersiz kıl
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const persistedUser = useUserAuth.getState().currentUser;
+if (persistedUser && !UUID_RE.test(persistedUser.id)) {
+  clearToken();
+  useUserAuth.setState({ currentUser: null });
+}
+
 // Sayfa yenilenince token varsa kullanıcıyı yenile
 const token = localStorage.getItem('randevu-token');
 if (token && useUserAuth.getState().currentUser) {
@@ -200,7 +200,6 @@ if (token && useUserAuth.getState().currentUser) {
     account.favoriteServiceIds = useUserAuth.getState().currentUser?.favoriteServiceIds ?? [];
     useUserAuth.setState({ currentUser: account });
   }).catch(() => {
-    // Token geçersiz, temizle
     clearToken();
     useUserAuth.setState({ currentUser: null });
   });

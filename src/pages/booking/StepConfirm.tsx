@@ -5,6 +5,7 @@ import { useData, toAppointment } from '../../lib/data';
 import { useUserAuth } from '../../store/userAuth';
 import { useNavigate } from 'react-router-dom';
 import { appointmentsApi } from '../../lib/api';
+import { useSwal } from '../../lib/swal';
 import {
   ArrowLeft, Scissors, User, CalendarDays, Clock,
   Phone, Mail, ChevronRight, Star,
@@ -33,6 +34,7 @@ export default function StepConfirm() {
   const { services, employees, upsertAppointment } = useData();
   const { currentUser } = useUserAuth();
   const navigate = useNavigate();
+  const swal = useSwal();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [successData, setSuccessData] = useState({ serviceName: '', date: '', startTime: '' });
@@ -62,8 +64,10 @@ export default function StepConfirm() {
         endTime,
       });
       upsertAppointment(toAppointment(api));
-    } catch {
-      // offline fallback — will sync via realtime
+    } catch (e: unknown) {
+      setLoading(false);
+      swal.toast({ icon: 'error', title: (e as Error).message ?? 'Randevu kaydedilemedi' });
+      return;
     }
 
     const prefs = currentUser.notificationPrefs;
