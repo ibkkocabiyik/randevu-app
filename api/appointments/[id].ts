@@ -12,16 +12,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const caller = verifyToken(req);
     if (!caller) return res.status(401).json({ error: 'Token gerekli' });
 
-    const { status, notes, date, start_time, end_time } = req.body;
+    const { status, notes, date, start_time, end_time, employee_id } = req.body;
     const updates: Record<string, unknown> = {};
 
     if (caller.role === 'admin') {
       // Admin: her alanı güncelleyebilir
-      if (status    !== undefined) updates.status     = status;
-      if (notes     !== undefined) updates.notes      = notes;
-      if (date      !== undefined) updates.date       = date;
-      if (start_time !== undefined) updates.start_time = start_time;
-      if (end_time  !== undefined) updates.end_time   = end_time;
+      if (status      !== undefined) updates.status      = status;
+      if (notes       !== undefined) updates.notes       = notes;
+      if (date        !== undefined) updates.date        = date;
+      if (start_time  !== undefined) updates.start_time  = start_time;
+      if (end_time    !== undefined) updates.end_time    = end_time;
+      if (employee_id !== undefined) updates.employee_id = employee_id;
     } else {
       // Müşteri: sadece kendi randevusunu iptal edebilir veya yeniden planlayabilir
       const { data: appt } = await supabase
@@ -52,6 +53,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { data, error } = await supabase
       .from('appointments').update(updates).eq('id', id).select().single();
     if (error) return res.status(500).json({ error: error.message });
+
+    // Tamamlandı → sadakat puanı ekle
+    if (updates.status === 'completed' && data.customer_id) {
+      const { data: svc } = await supabase
+        .from('services').select('price').eq('id', data.service_id).single();
+      if (svc) {
+        const points = Math.round((svc as { price: number }).price / 10);
+        await supabase.rpc('add_loyalty_points', { uid: data.customer_id, pts: points });
+      }
+    }
+
     return res.json(data);
   }
 

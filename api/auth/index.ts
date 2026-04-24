@@ -28,7 +28,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (error || !user) return res.status(500).json({ error: error?.message });
 
     const token = signToken({ userId: user.id, role: 'user' });
-    return res.status(201).json({ token, user });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash: _r, ...safeUserR } = user as Record<string, unknown>;
+    return res.status(201).json({ token, user: safeUserR });
   }
 
   // POST /api/auth?action=login
@@ -47,7 +49,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!ok) return res.status(401).json({ error: 'Sifre hatali' });
 
     const token = signToken({ userId: user.id, role: 'user' });
-    return res.json({ token, user });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password_hash: _l, ...safeUserL } = user as Record<string, unknown>;
+    return res.json({ token, user: safeUserL });
   }
 
   // POST /api/auth?action=admin-login
@@ -70,7 +74,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data, error } = await supabase
         .from('users').select('*').eq('id', user.userId).single();
       if (error || !data) return res.status(404).json({ error: 'Kullanici bulunamadi' });
-      return res.json(data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password_hash: _, ...safeData } = data as Record<string, unknown>;
+      return res.json(safeData);
     }
 
     if (req.method === 'PATCH') {
@@ -88,7 +94,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const { data, error } = await supabase
         .from('users').update(patch).eq('id', user.userId).select().single();
       if (error) return res.status(500).json({ error: error.message });
-      return res.json(data);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password_hash: _, ...safeData } = data as Record<string, unknown>;
+      return res.json(safeData);
     }
 
     return res.status(405).end();

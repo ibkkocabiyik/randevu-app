@@ -6,11 +6,11 @@
 -- Demo kullanıcılar (şifre: demo123 → bcrypt hash)
 -- Not: bcrypt hash'i değiştiremiyorsan kullanıcıları kayıt ekranından ekle
 insert into users (id, name, email, phone, password_hash, loyalty_points) values
-  ('f1000000-0000-0000-0000-000000000001', 'Ali Yılmaz',   'ali@demo.com',    '05301111111', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVKm/kGgLK', 830),
-  ('f1000000-0000-0000-0000-000000000002', 'Fatma Kaya',   'fatma@demo.com',  '05302222222', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVKm/kGgLK', 620),
-  ('f1000000-0000-0000-0000-000000000003', 'Emre Demir',   'emre@demo.com',   '05303333333', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVKm/kGgLK', 390),
-  ('f1000000-0000-0000-0000-000000000004', 'Zeynep Çelik', 'zeynep@demo.com', '05304444444', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVKm/kGgLK', 560),
-  ('f1000000-0000-0000-0000-000000000005', 'Murat Şahin',  'murat@demo.com',  '05305555555', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVKm/kGgLK', 450)
+  ('f1000000-0000-0000-0000-000000000001', 'Ali Yılmaz',   'ali@demo.com',    '05301111111', '$2b$10$UI5OY6XYbEX50mhd/uC0ZeraC2hj3Pq0.I/Dsv8BDjrjQymFHDxI6', 830),
+  ('f1000000-0000-0000-0000-000000000002', 'Fatma Kaya',   'fatma@demo.com',  '05302222222', '$2b$10$UI5OY6XYbEX50mhd/uC0ZeraC2hj3Pq0.I/Dsv8BDjrjQymFHDxI6', 620),
+  ('f1000000-0000-0000-0000-000000000003', 'Emre Demir',   'emre@demo.com',   '05303333333', '$2b$10$UI5OY6XYbEX50mhd/uC0ZeraC2hj3Pq0.I/Dsv8BDjrjQymFHDxI6', 390),
+  ('f1000000-0000-0000-0000-000000000004', 'Zeynep Çelik', 'zeynep@demo.com', '05304444444', '$2b$10$UI5OY6XYbEX50mhd/uC0ZeraC2hj3Pq0.I/Dsv8BDjrjQymFHDxI6', 560),
+  ('f1000000-0000-0000-0000-000000000005', 'Murat Şahin',  'murat@demo.com',  '05305555555', '$2b$10$UI5OY6XYbEX50mhd/uC0ZeraC2hj3Pq0.I/Dsv8BDjrjQymFHDxI6', 450)
 on conflict (email) do nothing;
 
 -- Randevular (serviceId s1-s5 → Supabase UUID'lere map edildi)

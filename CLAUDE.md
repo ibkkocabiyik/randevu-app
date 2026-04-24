@@ -5,24 +5,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Komutlar
 
 ```bash
-npm run dev       # Vite dev sunucusu — http://localhost:3000
+npm run dev       # vercel dev — frontend + /api functions birlikte (http://localhost:3000)
 npm run build     # TypeScript derle + Vite production build
 npm run lint      # ESLint
 ```
 
-Backend local dev için ayrı çalıştırılır:
-```bash
-cd server && npm run dev   # Express API — http://localhost:4000
-```
+`vercel dev` ilk çalıştırmada Vercel hesabına login ister (`vercel login`). `.vercel/project.json` oluştuktan sonra sonraki çalıştırmalarda sorulmaz.
 
 ## Teknoloji Yığını
 
-- **Frontend**: React 19 + TypeScript, Vite (port 3000)
+- **Frontend**: React 19 + TypeScript, Vite
 - **State**: Zustand 5 (`persist` middleware → localStorage)
 - **Routing**: React Router v7
 - **Stil**: Tailwind CSS v4 (`@tailwindcss/vite`)
-- **Backend (local)**: Express (`/server`), Supabase
-- **Backend (prod)**: Vercel Serverless Functions (`/api`)
+- **Backend**: Vercel Serverless Functions (`/api`) — hem local hem production
+- **Veritabanı**: Supabase (PostgreSQL + Realtime)
 - **Realtime**: Supabase `postgres_changes` subscription
 
 ## Mimari
@@ -49,14 +46,11 @@ cd server && npm run dev   # Express API — http://localhost:4000
 
 `useData` in-memory store, `useReviewStore` localStorage persist. Supabase yoksa (env boş) cross-tab sync `/__sync` HTTP polling ile çalışır — `initSync()` `main.tsx`'de app başlangıcında çağrılır.
 
-### Backend İki Ortamda
+### Backend
 
-| Ortam | Konum | Port | Notlar |
-|-------|-------|------|--------|
-| Local dev | `/server/src/` | 4000 | Express, CORS `*` |
-| Production | `/api/` | — | Vercel Serverless Functions |
+Tüm backend `/api` klasöründe Vercel Serverless Functions olarak barınır — local ve production aynı kod. Rota mantığı query param ile: `/api/auth?action=register|login|me|admin-login`.
 
-Her iki ortam da aynı Supabase DB'yi kullanır. Rota mantığı query param ile: `/api/auth?action=register|login|me|admin-login`.
+`vercel dev` komutu local'de hem Vite frontend'i hem `/api` functions'larını birlikte çalıştırır; ayrı bir backend sürecine gerek yoktur.
 
 `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` boşsa `supabase = null` → realtime subscription çalışmaz, sadece localStorage sync devreye girer.
 
