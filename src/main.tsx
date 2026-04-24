@@ -4,7 +4,9 @@ import './index.css'
 import App from './App.tsx'
 import { startRealtime } from './lib/data'
 import { useData } from './lib/data'
+import { initSync } from './store/sync'
 
+initSync();
 startRealtime();
 useData.getState().fetchAll();
 

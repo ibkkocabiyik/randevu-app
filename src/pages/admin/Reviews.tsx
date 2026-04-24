@@ -1,8 +1,51 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useData } from '../../lib/data';
 import { useReviewStore } from '../../store/reviews';
 import { Star, MessageSquare, TrendingUp, Award, Filter } from 'lucide-react';
 import { cn } from '../../lib/utils';
+
+function useFlash(value: number | string) {
+  const prev = useRef(value);
+  const [flashing, setFlashing] = useState(false);
+  useEffect(() => {
+    if (prev.current !== value) {
+      prev.current = value;
+      setFlashing(true);
+      const t = setTimeout(() => setFlashing(false), 1800);
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+  return flashing;
+}
+
+function useCountUp(target: number, duration = 600) {
+  const [display, setDisplay] = useState(target);
+  const prev = useRef(target);
+  const raf = useRef<number | null>(null);
+
+  const animate = useCallback((from: number, to: number) => {
+    if (raf.current) cancelAnimationFrame(raf.current);
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + (to - from) * eased));
+      if (t < 1) raf.current = requestAnimationFrame(step);
+    };
+    raf.current = requestAnimationFrame(step);
+  }, [duration]);
+
+  useEffect(() => {
+    if (prev.current !== target) {
+      animate(prev.current, target);
+      prev.current = target;
+    }
+  }, [target, animate]);
+
+  useEffect(() => { setDisplay(target); prev.current = target; }, []); // eslint-disable-line
+  return display;
+}
 
 function StarRow({ rating, max = 5 }: { rating: number; max?: number }) {
   return (
@@ -47,10 +90,22 @@ export default function Reviews() {
   // İstatistikler
   const total = reviews.length;
   const avg = total > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / total : 0;
+  const fiveStarCount = reviews.filter(r => r.rating === 5).length;
+  const satisfactionRate = total > 0 ? Math.round((reviews.filter(r => r.rating >= 4).length / total) * 100) : 0;
   const ratingDist = [5, 4, 3, 2, 1].map(r => ({
     rating: r,
     count: reviews.filter(rv => rv.rating === r).length,
   }));
+
+  // Flash + count-up hooks for live stat cards
+  const animatedTotal = useCountUp(total);
+  const animatedFiveStar = useCountUp(fiveStarCount);
+  const animatedSatisfaction = useCountUp(satisfactionRate);
+  const animatedAvg = useCountUp(Math.round(avg * 10));
+  const flashTotal = useFlash(total);
+  const flashFiveStar = useFlash(fiveStarCount);
+  const flashSatisfaction = useFlash(satisfactionRate);
+  const flashAvg = useFlash(Math.round(avg * 10));
 
   // Filtrele
   let filtered = reviews.filter(r => {
@@ -98,48 +153,50 @@ export default function Reviews() {
       {/* Üst istatistik kartları */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {/* Ortalama puan — büyük kart */}
-        <div className="col-span-2 sm:col-span-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 p-5 text-white shadow-lg shadow-amber-400/25 flex flex-col justify-between min-h-[120px]">
+        <div className={`col-span-2 sm:col-span-1 rounded-2xl p-5 text-white shadow-lg flex flex-col justify-between min-h-[120px] transition-all duration-300 ${flashAvg ? 'bg-gradient-to-br from-amber-300 to-orange-300 shadow-amber-300/40 scale-[1.02]' : 'bg-gradient-to-br from-amber-400 to-orange-400 shadow-amber-400/25'}`}>
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-widest text-white/70">Ortalama</p>
-            <Star size={16} className="text-white fill-white" />
+            <Star size={16} className={`fill-white transition-transform duration-300 ${flashAvg ? 'scale-125 text-white' : 'text-white'}`} />
           </div>
           <div>
-            <p className="text-4xl font-black tabular-nums leading-none mt-2">{avg > 0 ? avg.toFixed(1) : '—'}</p>
+            <p className="text-4xl font-black tabular-nums leading-none mt-2">
+              {avg > 0 ? (animatedAvg / 10).toFixed(1) : '—'}
+            </p>
             <div className="flex items-center gap-1 mt-1">
               {avg > 0 && <StarRow rating={Math.round(avg)} />}
             </div>
           </div>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-[#1a1d27] border border-gray-100 dark:border-white/[0.06] p-4 shadow-sm flex flex-col justify-between">
+        <div className={`rounded-2xl bg-white dark:bg-[#1a1d27] border p-4 shadow-sm flex flex-col justify-between transition-all duration-300 ${flashTotal ? 'border-[#6366F1]/50 ring-2 ring-[#6366F1]/30 bg-[#6366F1]/5 dark:bg-[#6366F1]/10 scale-[1.02]' : 'border-gray-100 dark:border-white/[0.06]'}`}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-400 uppercase tracking-wide">Toplam</p>
-            <MessageSquare size={15} className="text-[#6366F1]" />
+            <MessageSquare size={15} className={`transition-transform duration-300 ${flashTotal ? 'scale-125 text-[#6366F1]' : 'text-[#6366F1]'}`} />
           </div>
-          <p className="text-2xl font-black text-gray-900 dark:text-white">{total}</p>
+          <p className={`text-2xl font-black tabular-nums transition-colors duration-300 ${flashTotal ? 'text-[#6366F1]' : 'text-gray-900 dark:text-white'}`}>{animatedTotal}</p>
           <p className="text-[11px] text-gray-400 mt-0.5">yorum</p>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-[#1a1d27] border border-gray-100 dark:border-white/[0.06] p-4 shadow-sm flex flex-col justify-between">
+        <div className={`rounded-2xl bg-white dark:bg-[#1a1d27] border p-4 shadow-sm flex flex-col justify-between transition-all duration-300 ${flashFiveStar ? 'border-emerald-400/50 ring-2 ring-emerald-400/30 bg-emerald-50/50 dark:bg-emerald-900/10 scale-[1.02]' : 'border-gray-100 dark:border-white/[0.06]'}`}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-400 uppercase tracking-wide">5 Yıldız</p>
-            <Award size={15} className="text-emerald-500" />
+            <Award size={15} className={`transition-transform duration-300 ${flashFiveStar ? 'scale-125 text-emerald-500' : 'text-emerald-500'}`} />
           </div>
-          <p className="text-2xl font-black text-gray-900 dark:text-white">
-            {reviews.filter(r => r.rating === 5).length}
+          <p className={`text-2xl font-black tabular-nums transition-colors duration-300 ${flashFiveStar ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}>
+            {animatedFiveStar}
           </p>
           <p className="text-[11px] text-gray-400 mt-0.5">
-            {total > 0 ? `%${Math.round((reviews.filter(r => r.rating === 5).length / total) * 100)}` : '%0'}
+            {total > 0 ? `%${Math.round((fiveStarCount / total) * 100)}` : '%0'}
           </p>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-[#1a1d27] border border-gray-100 dark:border-white/[0.06] p-4 shadow-sm flex flex-col justify-between">
+        <div className={`rounded-2xl bg-white dark:bg-[#1a1d27] border p-4 shadow-sm flex flex-col justify-between transition-all duration-300 ${flashSatisfaction ? 'border-emerald-400/50 ring-2 ring-emerald-400/30 bg-emerald-50/50 dark:bg-emerald-900/10 scale-[1.02]' : 'border-gray-100 dark:border-white/[0.06]'}`}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-400 uppercase tracking-wide">Memnuniyet</p>
-            <TrendingUp size={15} className="text-emerald-500" />
+            <TrendingUp size={15} className={`transition-transform duration-300 ${flashSatisfaction ? 'scale-125 text-emerald-500' : 'text-emerald-500'}`} />
           </div>
-          <p className="text-2xl font-black text-gray-900 dark:text-white">
-            {total > 0 ? `%${Math.round((reviews.filter(r => r.rating >= 4).length / total) * 100)}` : '—'}
+          <p className={`text-2xl font-black tabular-nums transition-colors duration-300 ${flashSatisfaction ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-900 dark:text-white'}`}>
+            {total > 0 ? `%${animatedSatisfaction}` : '—'}
           </p>
           <p className="text-[11px] text-gray-400 mt-0.5">4★ ve üzeri</p>
         </div>

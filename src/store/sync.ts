@@ -1,6 +1,7 @@
 import { useStore } from './index';
 import { useUserAuth } from './userAuth';
 import { useReviewStore } from './reviews';
+import { useData } from '../lib/data';
 
 const SYNC_KEYS = ['randevu-store', 'randevu-user-auth', 'randevu-reviews'] as const;
 const POLL_MS = 1500;
@@ -35,7 +36,19 @@ async function poll(key: string) {
       _orig(key, data.value);
       if (key === 'randevu-store') useStore.persist.rehydrate();
       if (key === 'randevu-user-auth') useUserAuth.persist.rehydrate();
-      if (key === 'randevu-reviews') useReviewStore.persist.rehydrate();
+      if (key === 'randevu-reviews') {
+        useReviewStore.persist.rehydrate();
+        // Sync reviews into useData so admin panels that read from useData also update
+        setTimeout(() => {
+          const legacy = useReviewStore.getState().reviews;
+          const dataRevs = useData.getState().reviews;
+          legacy.forEach(r => {
+            if (!dataRevs.some(d => d.id === r.id)) {
+              useData.getState().upsertReview(r);
+            }
+          });
+        }, 50);
+      }
       setTimeout(() => { writing = false; }, 150);
     }
   } catch {}

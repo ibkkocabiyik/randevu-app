@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useData } from '../../lib/data';
 import { Card } from '../../components/ui/Card';
 import {
@@ -63,21 +63,74 @@ function Trend({ value, lowerIsBetter = false }: { value: number; lowerIsBetter?
   );
 }
 
+// ─── Flash hook — değer değişince 1.8s highlight ─────────────────────────────
+function useFlash(value: number | string) {
+  const prev = useRef(value);
+  const [flashing, setFlashing] = useState(false);
+  useEffect(() => {
+    if (prev.current !== value) {
+      prev.current = value;
+      setFlashing(true);
+      const t = setTimeout(() => setFlashing(false), 1800);
+      return () => clearTimeout(t);
+    }
+  }, [value]);
+  return flashing;
+}
+
+// ─── Count-up animation hook ──────────────────────────────────────────────────
+function useCountUp(target: number, duration = 600) {
+  const [display, setDisplay] = useState(target);
+  const prev = useRef(target);
+  const raf = useRef<number | null>(null);
+
+  const animate = useCallback((from: number, to: number) => {
+    if (raf.current) cancelAnimationFrame(raf.current);
+    const start = performance.now();
+    const step = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplay(Math.round(from + (to - from) * eased));
+      if (t < 1) raf.current = requestAnimationFrame(step);
+    };
+    raf.current = requestAnimationFrame(step);
+  }, [duration]);
+
+  useEffect(() => {
+    if (prev.current !== target) {
+      animate(prev.current, target);
+      prev.current = target;
+    }
+  }, [target, animate]);
+
+  useEffect(() => { setDisplay(target); prev.current = target; }, []); // eslint-disable-line
+  return display;
+}
+
 // ─── Stat card (big number) ───────────────────────────────────────────────────
 function StatCard({ label, value, icon: Icon, iconBg, iconColor, trend, lowerIsBetter, trendLabel }: {
   label: string; value: number | string; icon: React.ElementType;
   iconBg: string; iconColor: string; trend?: number; lowerIsBetter?: boolean; trendLabel?: string;
 }) {
+  const numericValue = typeof value === 'number' ? value : NaN;
+  const animated = useCountUp(isNaN(numericValue) ? 0 : numericValue);
+  const flashing = useFlash(value);
+
+  const displayValue = typeof value === 'number'
+    ? animated.toLocaleString('tr-TR')
+    : value;
+
   return (
     <Card>
-      <div className="flex items-start gap-3">
-        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+      <div className={`flex items-start gap-3 rounded-xl transition-all duration-300 ${flashing ? 'ring-2 ring-[#6366F1]/40 bg-[#6366F1]/5 dark:bg-[#6366F1]/10 -m-1 p-1' : ''}`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 ${flashing ? 'scale-110' : ''} ${iconBg}`}>
           <Icon size={20} className={iconColor} />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{label}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-gray-900 dark:text-gray-100">
-            {typeof value === 'number' ? value.toLocaleString('tr-TR') : value}
+          <p className={`mt-1 text-2xl font-bold tabular-nums transition-colors duration-300 ${flashing ? 'text-[#6366F1] dark:text-indigo-400' : 'text-gray-900 dark:text-gray-100'}`}>
+            {displayValue}
           </p>
           {trend !== undefined && (
             <div className="mt-1.5 flex items-center gap-1.5">
