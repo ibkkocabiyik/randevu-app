@@ -25,10 +25,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
       // Müşteri: sadece kendi randevusunu iptal edebilir veya yeniden planlayabilir
       const { data: appt } = await supabase
-        .from('appointments').select('customer_id, status').eq('id', id).single();
+        .from('appointments').select('customer_id, customer_phone, status').eq('id', id).single();
       if (!appt) return res.status(404).json({ error: 'Randevu bulunamadı' });
-      if (appt.customer_id !== caller.userId)
+
+      // customer_id eşleşiyorsa veya (customer_id null ise) phone eşleşiyorsa izin ver
+      const { data: caller_user } = appt.customer_id
+        ? { data: null }
+        : await supabase.from('users').select('phone').eq('id', caller.userId).single();
+      const ownedById = appt.customer_id === caller.userId;
+      const ownedByPhone = !appt.customer_id && caller_user && appt.customer_phone === (caller_user as { phone: string }).phone;
+      if (!ownedById && !ownedByPhone)
         return res.status(403).json({ error: 'Bu randevuya erişim yetkiniz yok' });
+
       if (appt.status === 'cancelled' || appt.status === 'completed')
         return res.status(400).json({ error: 'Bu randevu güncellenemez' });
 

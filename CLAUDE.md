@@ -81,3 +81,16 @@ Her iki ortam da aynı Supabase DB'yi kullanır. Rota mantığı query param ile
 | Faz 1 — Randevu akışı, admin dashboard | ✅ Aktif geliştirmede |
 | Faz 2 — Auth, bildirimler (SMS/email/push) | ⏳ Planlandı |
 | Faz 3 — Online ödeme, sadakat puanları, analitik | ⏳ Planlandı |
+
+## Yapılacaklar — Randevu İşlemleri (minimalden majöre)
+
+Aşağıdaki sorunlar tespit edildi, en minimalden en majöre sıralanmıştır:
+
+| # | Öncelik | Dosya | Sorun |
+|---|---------|-------|-------|
+| 1 | 🟢 Minimal | `src/pages/user/MyAppointments.tsx:250` | `void upsertReview; void _addReview` dead code — import edilip hemen void'leniyor |
+| 2 | 🟢 Minimal | `src/pages/user/MyAppointments.tsx:279-280` | `appt` ve `appt2` aynı şeyi yapan duplicate değişken; satır 284'te hatalı olan `appt` kullanılıyor |
+| 3 | 🟡 Orta | `server/src/routes/appointments.ts:123` | PATCH handler `startTime`/`endTime` (camelCase) bekliyor ama frontend `start_time`/`end_time` (snake_case) gönderiyor — yenileme Express üzerinden sessizce başarısız oluyor |
+| 4 | 🟡 Orta | `src/pages/user/MyAppointments.tsx:173` | Review API başarısız olsa bile catch bloğu local store'a yazıyor — UI "başarılı" gösteriyor ama DB'ye gitmiyor |
+| 5 | 🔴 Majör | `api/appointments/[id].ts:30` | Vercel PATCH handler müşteriyi `customer_id` (UUID) ile doğruluyor; ama müşteri token'ında `userId` var ve bu `customer_id` ile eşleşmeyebilir — yenileme/iptal 403 dönebilir |
+| 6 | 🔴 Majör | `src/pages/user/MyAppointments.tsx` | İptal ve yenileme sonrası `useReviewStore` / `/__sync` üzerinden admin paneline yansımıyor; sadece `useData` in-memory güncelleniyor, cross-tab sync eksik |

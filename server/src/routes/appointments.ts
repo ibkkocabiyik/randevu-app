@@ -120,7 +120,7 @@ router.post('/', async (req, res) => {
 // PATCH /api/appointments/:id — admin veya randevunun sahibi
 router.patch('/:id', requireAuth, async (req, res) => {
   const id = req.params.id;
-  const { status, notes, date, startTime, endTime, employeeId } = req.body;
+  const { status, notes, date, start_time, end_time, employeeId } = req.body;
 
   // Yetki kontrolü: admin değilse sadece kendi randevusu
   if (req.user!.role !== 'admin') {
@@ -136,11 +136,11 @@ router.patch('/:id', requireAuth, async (req, res) => {
   }
 
   const patch: Record<string, unknown> = {};
-  if (status)    patch.status     = status;
-  if (notes)     patch.notes      = notes;
-  if (date)      patch.date       = date;
-  if (startTime) patch.start_time = startTime;
-  if (endTime)   patch.end_time   = endTime;
+  if (status)     patch.status     = status;
+  if (notes)      patch.notes      = notes;
+  if (date)       patch.date       = date;
+  if (start_time) patch.start_time = start_time;
+  if (end_time)   patch.end_time   = end_time;
   if (employeeId) patch.employee_id = employeeId;
 
   const { data, error } = await supabase

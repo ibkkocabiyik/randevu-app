@@ -170,9 +170,11 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
       });
       useData.getState().upsertReview(toReview(api));
       addReview({ appointmentId: appt.id, serviceId: appt.serviceId, employeeId: appt.employeeId, customerName: currentUser.name, rating, comment });
-    } catch { addReview({ appointmentId: appt.id, serviceId: appt.serviceId, employeeId: appt.employeeId, customerName: currentUser.name, rating, comment }); }
-    swal.toast({ icon: 'success', title: 'Değerlendirmeniz için teşekkürler!' });
-    onClose();
+      swal.toast({ icon: 'success', title: 'Değerlendirmeniz için teşekkürler!' });
+      onClose();
+    } catch (e: unknown) {
+      swal.toast({ icon: 'error', title: (e as Error).message ?? 'Değerlendirme gönderilemedi' });
+    }
   }
 
   return (
@@ -238,16 +240,15 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function MyAppointments() {
-  const { appointments, services, employees, upsertAppointment, upsertReview } = useData();
+  const { appointments, services, employees, upsertAppointment } = useData();
   const { addNotification } = useStore();
-  const { hasReview, addReview: _addReview } = useReviewStore();
+  const { hasReview } = useReviewStore();
   const { currentUser } = useUserAuth();
   const navigate = useNavigate();
   const swal = useSwal();
 
   const [tab, setTab] = useState<'upcoming' | 'past'>('upcoming');
 
-  void upsertReview; void _addReview;
   const [reschedule, setReschedule] = useState<Appointment | null>(null);
   const [reviewing, setReviewing]   = useState<Appointment | null>(null);
 
@@ -277,10 +278,9 @@ export default function MyAppointments() {
     const ok = await swal.confirm({ title: 'Randevuyu iptal et?', text: 'Bu işlem geri alınamaz.', confirmText: 'Evet, iptal et' });
     if (!ok) return;
     const appt = appointments.find(a => a.id === id);
-    const appt2 = appointments.find(a => a.id === id);
-    if (appt2) upsertAppointment({ ...appt2, status: 'cancelled' });
+    if (appt) upsertAppointment({ ...appt, status: 'cancelled' });
     try { await appointmentsApi.update(id, { status: 'cancelled' } as never); }
-    catch { if (appt2) upsertAppointment(appt2); }
+    catch { if (appt) upsertAppointment(appt); }
     if (appt) {
       const svc = services.find(s => s.id === appt.serviceId);
       addNotification({
