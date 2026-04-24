@@ -55,76 +55,18 @@ function apiUserToAccount(u: Awaited<ReturnType<typeof authApi.me>>): UserAccoun
   };
 }
 
-const SEED_USERS: UserAccount[] = [
-  {
-    id: 'u1',
-    name: 'Ali Yılmaz',
-    email: 'ali@example.com',
-    phone: '05301111111',
-    passwordHash: 'demo1234',
-    favoriteServiceIds: ['s1', 's3'],
-    notificationPrefs: DEFAULT_PREFS,
-    loyaltyPoints: 45,
-    createdAt: '2026-01-01T10:00:00.000Z',
-  },
-  {
-    id: 'u2',
-    name: 'Fatma Kaya',
-    email: 'fatma@example.com',
-    phone: '05302222222',
-    passwordHash: 'demo1234',
-    favoriteServiceIds: ['s4'],
-    notificationPrefs: DEFAULT_PREFS,
-    loyaltyPoints: 60,
-    createdAt: '2026-01-02T10:00:00.000Z',
-  },
-  {
-    id: 'u3',
-    name: 'Emre Demir',
-    email: 'emre@example.com',
-    phone: '05303333333',
-    passwordHash: 'demo1234',
-    favoriteServiceIds: ['s2', 's3'],
-    notificationPrefs: DEFAULT_PREFS,
-    loyaltyPoints: 30,
-    createdAt: '2026-01-03T10:00:00.000Z',
-  },
-  {
-    id: 'u4',
-    name: 'Zeynep Çelik',
-    email: 'zeynep@example.com',
-    phone: '05304444444',
-    passwordHash: 'demo1234',
-    favoriteServiceIds: ['s4', 's1'],
-    notificationPrefs: DEFAULT_PREFS,
-    loyaltyPoints: 55,
-    createdAt: '2026-01-04T10:00:00.000Z',
-  },
-  {
-    id: 'u5',
-    name: 'Murat Şahin',
-    email: 'murat@example.com',
-    phone: '05305555555',
-    passwordHash: 'demo1234',
-    favoriteServiceIds: ['s1', 's2'],
-    notificationPrefs: DEFAULT_PREFS,
-    loyaltyPoints: 25,
-    createdAt: '2026-01-05T10:00:00.000Z',
-  },
-];
-
 export const useUserAuth = create<UserAuthStore>()(
   persist(
     (set, get) => ({
       currentUser: null,
-      users: SEED_USERS,
+      users: [],
 
       register: async ({ name, email, phone, password }) => {
         try {
           const { token, user } = await authApi.register({ name, email, phone, password });
           setToken(token);
           const account = apiUserToAccount(user);
-          set(s => ({ currentUser: account, users: [...s.users.filter(u => u.id !== account.id), account] }));
+          set({ currentUser: account });
           return { ok: true };
         } catch (e) {
           return { ok: false, error: e instanceof Error ? e.message : 'Kayıt başarısız' };
@@ -136,7 +78,7 @@ export const useUserAuth = create<UserAuthStore>()(
           const { token, user } = await authApi.login(emailOrPhone, password);
           setToken(token);
           const account = apiUserToAccount(user);
-          set(s => ({ currentUser: account, users: [...s.users.filter(u => u.id !== account.id), account] }));
+          set({ currentUser: account });
           return { ok: true };
         } catch (e) {
           return { ok: false, error: e instanceof Error ? e.message : 'Giriş başarısız' };
