@@ -140,6 +140,8 @@ create policy "service role bypass" on appointments using (true);
 -- VEYA:
 alter publication supabase_realtime add table appointments;
 alter publication supabase_realtime add table reviews;
+alter publication supabase_realtime add table services;
+alter publication supabase_realtime add table employees;
 alter publication supabase_realtime add table notifications;
 
 -- ─── SEED DATA ───────────────────────────────────────────────

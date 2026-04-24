@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { PageTransition } from './PageTransition';
 import { useAuth } from '../store/auth';
@@ -157,8 +157,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Supabase Realtime — anlık değişiklikleri dinle
   useRealtime();
 
-  // Admin paneli açılınca veriyi yenile (main.tsx'de fetchAll çağrılmışsa bu hızlı döner)
+  // Admin paneli açılınca veriyi yenile
   useEffect(() => { useData.getState().fetchAll(); }, []);
+
+  // Realtime fallback: Supabase publication ayarı eksikse polling ile kapsa
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    pollRef.current = setInterval(() => {
+      useData.getState().fetchAppointments();
+    }, 5000);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, []);
 
   // Sayfa değişince drawer'ı kapat
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
