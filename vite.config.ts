@@ -54,7 +54,20 @@ function syncPlugin(): Plugin {
   };
 }
 
+const VERCEL_URL = process.env.VITE_API_URL ?? 'https://randevu-3lldvn4ok-ibkkocabiyik-projects.vercel.app';
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), syncPlugin()],
-  server: { port: 3000, strictPort: true, host: true },
+  server: {
+    port: 3000,
+    strictPort: true,
+    host: true,
+    proxy: {
+      '/api': {
+        target: VERCEL_URL,
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
 })
