@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store';
 import { useData, toAppointment, toReview } from '../../lib/data';
-import { useReviewStore } from '../../store/reviews';
 import { useUserAuth } from '../../store/userAuth';
 import { useSwal } from '../../lib/swal';
 import { appointmentsApi, reviewsApi } from '../../lib/api';
@@ -148,7 +147,6 @@ function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => 
 /* ── Review modal ─────────────────────────────────────────────────── */
 function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void }) {
   const { services, employees } = useData();
-  const { addReview } = useReviewStore();
   const { currentUser } = useUserAuth();
   const swal = useSwal();
   const service  = services.find(s => s.id === appt.serviceId);
@@ -169,7 +167,6 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
         employeeId: appt.employeeId, customerName: currentUser.name, rating, comment,
       });
       useData.getState().upsertReview(toReview(api));
-      addReview({ appointmentId: appt.id, serviceId: appt.serviceId, employeeId: appt.employeeId, customerName: currentUser.name, rating, comment });
       swal.toast({ icon: 'success', title: 'Değerlendirmeniz için teşekkürler!' });
       onClose();
     } catch (e: unknown) {
@@ -240,14 +237,12 @@ function ReviewModal({ appt, onClose }: { appt: Appointment; onClose: () => void
 
 /* ── Main page ────────────────────────────────────────────────────── */
 export default function MyAppointments() {
-  const { appointments, services, employees, upsertAppointment, reviews: dataReviews } = useData();
+  const { appointments, services, employees, upsertAppointment, reviews } = useData();
   const { addNotification } = useStore();
-  const { hasReview: hasReviewLocal } = useReviewStore();
   const { currentUser } = useUserAuth();
 
-  // API'den gelen reviews + localStorage fallback — her ikisini de kontrol et
   const hasReview = (appointmentId: string) =>
-    hasReviewLocal(appointmentId) || dataReviews.some(r => r.appointmentId === appointmentId);
+    reviews.some(r => r.appointmentId === appointmentId);
   const navigate = useNavigate();
   const swal = useSwal();
 

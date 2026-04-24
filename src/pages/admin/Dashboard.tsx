@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '../../store/userAuth';
-import { useReviewStore } from '../../store/reviews';
 
 // ─── Intersection Observer hook — eleman görünce true döner ─────────────────
 function useInView(threshold = 0.15) {
@@ -473,9 +472,7 @@ function QuickAction({ label, icon: Icon, iconColor, onClick }: {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { appointments, services, employees, reviews: dataReviews, initialized } = useData();
-  const legacyReviews = useReviewStore(s => s.reviews);
-  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
+  const { appointments, services, employees, reviews, initialized } = useData();
   const { users } = useUserAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<'tickets' | 'summary'>('tickets');

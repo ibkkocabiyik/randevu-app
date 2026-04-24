@@ -1,6 +1,6 @@
 import { useStore } from '../../store';
 import { useData } from '../../lib/data';
-import { useReviewStore } from '../../store/reviews';
+
 import { useNavigate } from 'react-router-dom';
 import { User, Clock, ChevronRight, ArrowLeft, Scissors, Star, CalendarCheck } from 'lucide-react';
 
@@ -18,9 +18,7 @@ function SkeletonEmployee() {
 
 export default function StepEmployee() {
   const { booking, setBooking } = useStore();
-  const { employees, services, appointments, reviews: dataReviews, loading } = useData();
-  const legacyReviews = useReviewStore(s => s.reviews);
-  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
+  const { employees, services, appointments, reviews, loading } = useData();
   const navigate = useNavigate();
 
   const service  = services.find(s => s.id === booking.serviceId);

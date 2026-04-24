@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useData, toEmployee } from '../../lib/data';
 import { employeesApi } from '../../lib/api';
-import { useReviewStore } from '../../store/reviews';
+
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { useSwal } from '../../lib/swal';
@@ -62,9 +62,7 @@ function EmployeeForm({ initial, onSave, onCancel }: {
 }
 
 export default function Staff() {
-  const { employees, services, appointments, reviews: dataReviews, upsertEmployee, removeEmployee, initialized } = useData();
-  const legacyReviews = useReviewStore(s => s.reviews);
-  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
+  const { employees, services, appointments, reviews, upsertEmployee, removeEmployee, initialized } = useData();
   const swal = useSwal();
   const [showNew, setShowNew] = useState(false);
   const [editEmp, setEditEmp] = useState<Employee | null>(null);

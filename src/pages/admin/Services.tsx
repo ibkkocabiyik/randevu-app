@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useData, toService } from '../../lib/data';
 import { servicesApi } from '../../lib/api';
-import { useReviewStore } from '../../store/reviews';
+
 import { Card } from '../../components/ui/Card';
 import { Modal } from '../../components/ui/Modal';
 import { useSwal } from '../../lib/swal';
@@ -97,9 +97,7 @@ function ReviewsModal({ reviews }: { reviews: Review[] }) {
 }
 
 export default function Services() {
-  const { services, appointments, reviews: dataReviews, upsertService, removeService, initialized } = useData();
-  const legacyReviews = useReviewStore(s => s.reviews);
-  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
+  const { services, appointments, reviews, upsertService, removeService, initialized } = useData();
   const swal = useSwal();
   const [showNew, setShowNew] = useState(false);
   const [editSvc, setEditSvc] = useState<Service | null>(null);

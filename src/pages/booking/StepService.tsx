@@ -1,6 +1,6 @@
 import { useStore } from '../../store';
 import { useData } from '../../lib/data';
-import { useReviewStore } from '../../store/reviews';
+
 import { useUserAuth } from '../../store/userAuth';
 import { useNavigate } from 'react-router-dom';
 import { Scissors, Wind, Leaf, ChevronRight, Clock, Star, Heart } from 'lucide-react';
@@ -29,9 +29,7 @@ function SkeletonCard() {
 
 export default function StepService() {
   const { setBooking } = useStore();
-  const { services, reviews: dataReviews, loading } = useData();
-  const legacyReviews = useReviewStore(s => s.reviews);
-  const reviews = [...dataReviews, ...legacyReviews.filter(r => !dataReviews.some(dr => dr.id === r.id))];
+  const { services, reviews, loading } = useData();
   const { currentUser } = useUserAuth();
   const navigate = useNavigate();
   const favIds = currentUser?.favoriteServiceIds ?? [];
