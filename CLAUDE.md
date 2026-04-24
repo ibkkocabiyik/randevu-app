@@ -1,74 +1,83 @@
 # CLAUDE.md
 
-Bu dosya, bu depoda çalışan Claude Code (claude.ai/code) örneklerine rehberlik sağlar.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Proje Durumu
+## Komutlar
 
-**Faz 1 (MVP) aktif geliştirmede.** Temel randevu akışı ve admin dashboard çalışıyor; tüm veriler Zustand + localStorage ile tutulur (backend yok).
+```bash
+npm run dev       # Vite dev sunucusu — http://localhost:3000
+npm run build     # TypeScript derle + Vite production build
+npm run lint      # ESLint
+```
+
+Backend local dev için ayrı çalıştırılır:
+```bash
+cd server && npm run dev   # Express API — http://localhost:4000
+```
 
 ## Teknoloji Yığını
 
-- **Frontend**: React 19 + TypeScript, Vite
-- **State yönetimi**: Zustand (`persist` middleware ile localStorage'a yazılır)
+- **Frontend**: React 19 + TypeScript, Vite (port 3000)
+- **State**: Zustand 5 (`persist` middleware → localStorage)
 - **Routing**: React Router v7
-- **Stil**: Tailwind CSS v4 (`@tailwindcss/vite` plugin), dark mode destekli
+- **Stil**: Tailwind CSS v4 (`@tailwindcss/vite`)
+- **Backend (local)**: Express (`/server`), Supabase
+- **Backend (prod)**: Vercel Serverless Functions (`/api`)
+- **Realtime**: Supabase `postgres_changes` subscription
+
+## Mimari
+
+### İki Kullanıcı Rolü
+
+**Müşteri** (`/book`, `/my-appointments`, `/profile`): `UserProtectedRoute` ile korunur, `useUserAuth.currentUser` kontrol edilir. Giriş yapılmamışsa `/login?next=<path>` yönlendirir.
+
+**Admin** (`/admin/*`): `ProtectedRoute` ile korunur, `useAuth.isAuthenticated` kontrol edilir. Şifre tabanlı, tek kullanıcı (token içinde `role: 'admin'`).
+
+### Veri Akışı
 
 ```
-npm install       # bağımlılıkları yükle
-npm run dev       # geliştirme sunucusunu başlat (http://localhost:5173)
-npm run build     # production derlemesi
-npm run lint      # lint
+/src/lib/api.ts          → HTTP façade (tüm istekler JWT header ekler, BASE = VITE_API_URL ?? '')
+/src/lib/data.ts         → useData Zustand store (appointments, services, employees, reviews)
+                            + API→TS converter'lar (toAppointment, toService, ...)
+                            + startRealtime() — Supabase subscription başlatır
+/src/store/userAuth.ts   → useUserAuth (müşteri oturumu, profil, loyalty points)
+/src/store/auth.ts       → useAuth (admin boolean flag)
+/src/store/index.ts      → useStore (booking wizard state, bildirimler)
+/src/store/reviews.ts    → useReviewStore (localStorage fallback, cross-tab sync için)
+/src/store/sync.ts       → initSync() — localStorage.setItem'ı intercept eder, /__sync endpoint üzerinden cross-tab polling yapar (1500ms)
 ```
 
-## Mimari Plan
+`useData` in-memory store, `useReviewStore` localStorage persist. Supabase yoksa (env boş) cross-tab sync `/__sync` HTTP polling ile çalışır — `initSync()` `main.tsx`'de app başlangıcında çağrılır.
 
-### İki farklı kullanıcı rolü
-1. **Müşteri** — randevu alır, geçmişini görür, hizmet değerlendirir
-2. **Admin (İşletme Sahibi)** — çalışanları, hizmetleri, takvimi yönetir ve analizleri görür
+### Backend İki Ortamda
 
-### Temel domain kısıtlamaları
-- **Çakışan randevu olmamalı** — slot oluşturma, çalışan başına hizmet süresini dikkate almalıdır
-- **Çalışan bazlı müsaitlik** — her çalışanın bağımsız çalışma saatleri vardır; rezervasyon mantığı global değil, çalışan başına slot kontrol etmelidir
-- **Çakışma önleme kritiktir** — sistemin temel değişmezi
+| Ortam | Konum | Port | Notlar |
+|-------|-------|------|--------|
+| Local dev | `/server/src/` | 4000 | Express, CORS `*` |
+| Production | `/api/` | — | Vercel Serverless Functions |
 
-### Sayfa yapısı
-**Müşteri tarafı**: ana sayfa/randevu akışı → hizmet seçimi → takvim/saat seçimi → randevularım → profil
+Her iki ortam da aynı Supabase DB'yi kullanır. Rota mantığı query param ile: `/api/auth?action=register|login|me|admin-login`.
 
-**Admin paneli**: dashboard → takvim görünümü → randevu listesi → müşteri yönetimi (notlu mini-CRM) → hizmet yönetimi → çalışan yönetimi
+`VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` boşsa `supabase = null` → realtime subscription çalışmaz, sadece localStorage sync devreye girer.
 
-### UI/UX kısıtlamaları
-- Mobil öncelikli; randevu tamamlamak için maksimum 3 dokunuş
-- Skeleton loading durumları zorunlu (boş ekran yanıpı olmamalı)
-- Hover/transition üzerinde micro-interaction'lar
-- Erişilebilirlik standartları (WCAG)
+### Vite'daki `/__sync` Plugin
 
-## Yol Haritası
+`vite.config.ts` içinde `syncPlugin()` Vite dev server'a `/__sync` endpoint ekler. Takip edilen localStorage key'leri: `randevu-store`, `randevu-user-auth`, `randevu-reviews`. Her `setItem` yazıldığında sunucudaki in-memory snapshot'a push edilir; diğer sekmeler 1.5s'de bir poll eder.
 
-| Faz | Kapsam |
-|-----|--------|
-| Faz 1 (MVP) | Randevu akışı, admin dashboard, temel takvim |
-| Faz 2 | Kullanıcı hesabı (telefon/e-mail auth), bildirimler (SMS/e-mail/push), hizmet yönetimi |
-| Faz 3 | Online ödeme + kapora sistemi, sadakat puanları, analitik dashboard |
+### Booking Wizard
 
-## Tam Gereksinimler
+`useStore.booking` state machine: `StepService` → `StepEmployee` → `StepDateTime` → `StepConfirm`. Son adımda `/api/appointments` POST.
 
-### Müşteri Özellikleri
-- Müsait slotları görüntüleme, randevu oluşturma/iptal/yeniden planlama, geçmişi görme
-- Opsiyonel hesap: telefon/e-mail girişi, profil, favori hizmetler
-- Bildirimler: hatırlatmalar ve değişiklik uyarıları
-- Tahmini süre ve fiyat gösterimi olan hizmet kategorileri
-- Hizmet sonrası puanlama ve yorum
+### Kritik Domain Kuralları
 
-### Admin Özellikleri
-- Dashboard: günlük/haftalık/aylık randevu yoğunluğu, no-show oranı, popüler hizmetler, gelir tahmini
-- Randevu CRUD + manuel müşteri ekleme + yoğun saatleri bloklama
-- Çalışan yönetimi: birden fazla berber, çalışan bazlı planlama, çalışma saatleri
-- Hizmet yönetimi: fiyat ve süreyle birlikte ekleme/düzenleme/silme
-- Müşteri CRM: liste, randevu geçmişi, özel notlar (örn. "kısa kesim seviyor")
+- **Randevu çakışması olmamalı** — slot kontrolü çalışan başına yapılır, global değil
+- Randevu oluşturma/güncelleme sonrası `useData.upsertAppointment()` ile optimistic update yapılır (rollback yok)
+- Her çalışanın bağımsız çalışma saatleri vardır (`employee.workingHours`)
 
-### Opsiyonel / Gelecek Özellikler
-- Online ödeme + kapora (no-show azaltır)
-- Sadakat puanları ve indirim eşikleri
-- Kupon/kampanya sistemi
-- Google Calendar senkronizasyonu
-- Hizmet sürelerine göre otomatik slot oluşturma
+## Faz Durumu
+
+| Faz | Durum |
+|-----|-------|
+| Faz 1 — Randevu akışı, admin dashboard | ✅ Aktif geliştirmede |
+| Faz 2 — Auth, bildirimler (SMS/email/push) | ⏳ Planlandı |
+| Faz 3 — Online ödeme, sadakat puanları, analitik | ⏳ Planlandı |
