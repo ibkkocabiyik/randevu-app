@@ -131,8 +131,12 @@ alter table customer_notes    enable row level security;
 alter table notifications     enable row level security;
 
 -- Backend (service_role key) tüm tablolara erişebilir — policy gerekmez.
--- Burada sadece Realtime için okuma politikası:
-create policy "service role bypass" on appointments using (true);
+-- Realtime subscription ve frontend için anon okuma politikaları:
+create policy "anon read appointments"      on appointments      for select using (true);
+create policy "anon read reviews"           on reviews           for select using (true);
+create policy "anon read services"          on services          for select using (true);
+create policy "anon read employees"         on employees         for select using (true);
+create policy "anon read employee_services" on employee_services for select using (true);
 
 -- ─── REALTIME ────────────────────────────────────────────────
 -- Supabase Dashboard > Database > Replication'da şu tabloları ekle:
