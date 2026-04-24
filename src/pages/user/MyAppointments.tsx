@@ -74,13 +74,16 @@ function RescheduleModal({ appt, onClose }: { appt: Appointment; onClose: () => 
     if (!ok) return;
     const newEnd = calcEnd(selectedTime, service.durationMinutes);
     try {
-      await appointmentsApi.update(appt.id, {
+      const api = await appointmentsApi.update(appt.id, {
         date: selectedDate,
         start_time: selectedTime,
         end_time: newEnd,
-      });
-    } catch {}
-    upsertAppointment({ ...appt, date: selectedDate, startTime: selectedTime, endTime: newEnd });
+      } as never);
+      upsertAppointment(toAppointment(api));
+    } catch (e: unknown) {
+      swal.toast({ icon: 'error', title: (e as Error).message ?? 'Güncelleme başarısız' });
+      return;
+    }
     swal.toast({ icon: 'success', title: 'Randevu güncellendi' });
     onClose();
   }
