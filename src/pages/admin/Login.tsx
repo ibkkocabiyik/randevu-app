@@ -2,6 +2,7 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Scissors } from 'lucide-react';
 import { useAuth } from '../../store/auth';
+import { useData } from '../../lib/data';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -18,10 +19,12 @@ export default function Login() {
     setError('');
     setLoading(true);
     const ok = await login('', password);
-    setLoading(false);
     if (ok) {
+      await useData.getState().fetchAll();
+      setLoading(false);
       navigate('/admin', { replace: true });
     } else {
+      setLoading(false);
       setError('Şifre hatalı.');
     }
   }
